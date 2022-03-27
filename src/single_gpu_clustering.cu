@@ -35,6 +35,7 @@ void print_int_matrix(int *, int, int);
 int get_parent(int, int *);
 // Kernel functions
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
+__global__ void min_reduction(float *, float*, int);
 
 // Helper functions
 void print_float_matrix(float * a, int n, int m){
@@ -452,18 +453,25 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
   }
 }
 
-/* Helper Functions */
-/*void print_matrix(float * matrix, unsigned int N)
+// This is a multi block parralell reduction
+// reduce in block_mins after kernel finishes
+__global__ void min_reduction(float *arr, float* block_mins, int n)
 {
-  for (int i = 0; i < N; i++) 
-  {
-    for (int j = 0; j < N; j++) 
-    {
-      float curr = matrix[index(i,j,N)];
-      printf("%.2f\t", curr);
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+  int next = 1, left, right;
+  n /= 2;
+  while (n > 0){
+    if (index < n){
+      left = index * next * 2;
+      right = left + next;
+      if (arr[left] < arr[right]){
+        arr[left] = arr[right];
+      }
     }
-    printf("\n");
+    next *= 2;
+    n /= 2;
   }
+  __syncthreads();
+  if (threadIdx.x == 0)
+    block_mins[blockIdx.x] = arr[0];
 }
-*/
-
