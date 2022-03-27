@@ -255,7 +255,8 @@ float calculate_dist(float * dataset, int i, int j, int dim) {
   float dist = 0;
   // O(m)
   for (int mi = 0; mi < dim; mi++){
-    dist += (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]) * (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]);
+    float x = (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]);
+    dist += x * x;
   }
   return dist;
 }
