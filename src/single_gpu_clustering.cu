@@ -16,7 +16,9 @@
 
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
+
 #define PRINT_LOG 0
+
 /* Define constants */
 #define RANGE 100
 
@@ -32,12 +34,14 @@ float calculate_dist(float *, int, int, int);
 void print_float_matrix(float *, int, int);
 void print_int_matrix(int *, int, int);
 int get_parent(int, int *);
+
 // Kernel functions
 //__global__ void calculateMatrix(float * temp_d, float * playground_d, unsigned int N);
 
 // Helper functions
 void print_float_matrix(float * a, int n, int m){
   for(int i=0; i<n; i++){
+    printf("%d. ", i);
     for(int j=0; j<m; j++)
       printf("%f ", a[index(i, j, m)]);
     printf("\n");
@@ -51,6 +55,14 @@ void print_int_matrix(int * a, int n, int m){
     printf("\n");
   }
 }
+
+void print_usage_message() {
+    fprintf(stderr, "usage: clustering n m who\n");
+    fprintf(stderr, "n = dimension of the square matrix (1 and up)\n");
+    fprintf(stderr, "m = dimension of the square matrix (1 and up)\n");
+    fprintf(stderr, "who = 0: sequential code on CPU, 1: GPU execution\n");
+}
+
 
 void load_data(float * dataset, int n, int m) {
   srand((unsigned int) 0);
@@ -72,11 +84,26 @@ void load_data(float * dataset, int n, int m) {
 
 int main(int argc, char * argv[])
 {
+
+  // Validate argument counts
+  if(argc != 4)
+  {
+    print_usage_message();
+    exit(1);
+  }
+
   //Define variables
   //unsigned int N; /* Dimention of NxN matrix */
-  int type_of_device = atoi(argv[3]); // CPU or GPU
   int n = atoi(argv[1]);
   int m = atoi(argv[2]);
+  int type_of_device = atoi(argv[3]); // CPU or GPU
+
+ // Validate argument values
+ if(!(n > 0 && m > 0) || !(type_of_device == 0 || type_of_device == 1))
+  {
+    print_usage_message();
+    exit(1);
+  }
 
   printf("Hierarchical Clustering:\n");
   printf("Dataset size: %d x %d\n", n, m);
@@ -86,17 +113,7 @@ int main(int argc, char * argv[])
   double time_taken;
   clock_t start, end;
   
-  // Validate
-  /*if(argc != 4)
-  {
-    fprintf(stderr, "usage: heatdist num  iterations  who\n");
-    fprintf(stderr, "num = dimension of the square matrix (50 and up)\n");
-    fprintf(stderr, "iterations = number of iterations till stopping (1 and up)\n");
-    fprintf(stderr, "who = 0: sequential code on CPU, 1: GPU execution\n");
-    exit(1);
-  }*/
-
-  //Load data
+    //Load data
   float * dataset;
   dataset = (float *)calloc(n*m, sizeof(float));
   if( !dataset )
@@ -109,27 +126,6 @@ int main(int argc, char * argv[])
   
   type_of_device = atoi(argv[3]);
 
-  //N = (unsigned int) atoi(argv[1]);
-  //iterations = (unsigned int) atoi(argv[2]);
- 
-  
-  /* Dynamically allocate NxN array of floats */
-  /*playground = (float *)calloc(N*N, sizeof(float));
-  if( !playground )
-  {
-   fprintf(stderr, " Cannot allocate the %u x %u array\n", N, N);
-   exit(1);
-  }*/
-  
-  /* Initialize it: calloc already initalized everything to 0 */
-  // Edge elements  initialization
-  /*for(i = 0; i < N; i++)
-    playground[index(0,i,N)] = 100;
-  // FIXME: Why N-1? Shouldnt it be N? There is a post about it in Brightspace which has not been answered yet.
-  // Will leave it as it is
-  for(i = 0; i < N-1; i++)
-    playground[index(N-1,i,N)] = 150;
-  */
   float dendrogram[(n-1)*3];
   int * result;
   result = (int *)calloc(n, sizeof(int));
@@ -165,19 +161,15 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
   double time_taken;
   clock_t start, end;
 
-  /* Dynamically allocate another array for temp values */
-  /* Dynamically allocate NxN array of floats */
-  
-  if( !result )
-  {
+  if( !result ) {
    fprintf(stderr, " Cannot allocate result %u array\n", n);
    exit(1);
   }
+
   for (int i = 0; i < n; i++) result[i] = i;
 
   float* dist_matrix = (float *)calloc(n*n, sizeof(float));
-  if( !dist_matrix )
-  {
+  if( !dist_matrix ) {
    fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
    exit(1);
   }
