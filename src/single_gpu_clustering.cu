@@ -16,40 +16,56 @@
 
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
-
+#define PRINT_LOG 0
 /* Define constants */
 #define RANGE 100
 
 /*****************************************************************/
 
 // Function declarations
-void  seq_clustering(float *, unsigned int, unsigned int);
+void  seq_clustering(float *, unsigned int, unsigned int, int *, float *);
 //void  gpu_clustering(float *, unsigned int, unsigned int);
-void calculate_pairwise_dists(float * dataset, int n, int m, float * dist_matrix);
-
+void calculate_pairwise_dists(float *, int, int, float *);
+void find_pairwise_min(float *, int, float *, int *);
+void merge_clusters(int *, int, int, int);
+float calculate_dist(float *, int, int, int);
+void print_float_matrix(float *, int, int);
+void print_int_matrix(int *, int, int);
+int get_parent(int, int *);
 // Kernel functions
 //__global__ void calculateMatrix(float * temp_d, float * playground_d, unsigned int N);
 
 // Helper functions
-void load_data(float * dataset, int n, int m) {
-  dataset = (float *)calloc(n*m, sizeof(float));
-  if( !dataset )
-  {
-   fprintf(stderr, " Cannot allocate the %u x %u array\n", n, m);
-   exit(1);
+void print_float_matrix(float * a, int n, int m){
+  for(int i=0; i<n; i++){
+    for(int j=0; j<m; j++)
+      printf("%f ", a[index(i, j, m)]);
+    printf("\n");
   }
+}
 
+void print_int_matrix(int * a, int n, int m){
+  for (int i=0; i<n; i++){
+    for(int j=0; j<m; j++)
+      printf("%d ", a[index(i,j,m)]);
+    printf("\n");
+  }
+}
+
+void load_data(float * dataset, int n, int m) {
   srand((unsigned int) 0);
   for (int i = 0; i < n; i ++) {
     for (int j = 0; j < m; j++) {
       // assign numbers between 0 and RANGE
-      dataset[index(i, j, m)] = ((float)rand()/(float)(RAND_MAX)) * RANGE;
+      dataset[index(i, j, m)] = ((float)rand()/(float)(RAND_MAX)) * RANGE - RANGE/2.0;
     } 
+  }
+  if (PRINT_LOG){
+    printf("Dataset:\n");
+    print_float_matrix(dataset, n, m);
   }
 }
 
-void print_dendogram_tree(int * tree, int n) {
-}
 
 /*****************************************************************/
 /**** Do NOT CHANGE ANYTHING in main() function ******/
@@ -78,9 +94,16 @@ int main(int argc, char * argv[])
 
   //Load data
   float * dataset;
+  dataset = (float *)calloc(n*m, sizeof(float));
+  if( !dataset )
+  {
+   fprintf(stderr, " Cannot allocate the %u x %u array\n", n, m);
+   exit(1);
+  }
   load_data(dataset, n, m);
-
+  
   type_of_device = atoi(argv[3]);
+
   //N = (unsigned int) atoi(argv[1]);
   //iterations = (unsigned int) atoi(argv[2]);
  
@@ -102,12 +125,13 @@ int main(int argc, char * argv[])
   for(i = 0; i < N-1; i++)
     playground[index(N-1,i,N)] = 150;
   */
-
+  float dendrogram[(n-1)*3];
   int * result;
+  result = (int *)calloc(n, sizeof(int));
   if( !type_of_device ) // The CPU sequential version
   {  
     start = clock();
-    result = seq_clustering(dataset, n, m, result);    
+    seq_clustering(dataset, n, m, result, dendrogram);    
     end = clock();
   }
   else  // The GPU version
@@ -130,12 +154,12 @@ int main(int argc, char * argv[])
 
 
 /*****************  The CPU sequential version (DO NOT CHANGE THAT) **************/
-void  seq_clustering(float * dataset, int n, int m, int* result)
+void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* result, float * dendrogram)
 {
   
   /* Dynamically allocate another array for temp values */
   /* Dynamically allocate NxN array of floats */
-  result = (int *)calloc(n, sizeof(int));
+  
   if( !result )
   {
    fprintf(stderr, " Cannot allocate result %u array\n", n);
@@ -150,15 +174,36 @@ void  seq_clustering(float * dataset, int n, int m, int* result)
    exit(1);
   }
 
+  // O(n*n*m) -> GPU
   calculate_pairwise_dists(dataset, n, m, dist_matrix);
-  int cluster_size = n;
-  while (cluster_size > 0) {
-    int indices[2]; 
-    find_pairwise_min(dist_matrix, n, indices, result);
-    merge_clusters(result, indices[0], indices[1]);
-    cluster_size -= 1;
-  }
   
+  for (int iteration=0; iteration < n - 1; iteration++) {
+    
+    float entry[3]; 
+    // O(I*n*n) -> GPU
+    find_pairwise_min(dist_matrix, n, entry, result);
+    dendrogram[index(iteration, 0, 3)] = entry[0];
+    dendrogram[index(iteration, 1, 3)] = entry[1];
+    dendrogram[index(iteration, 2, 3)] = entry[2];
+    // O(I*n) -> amortized O(I)
+    merge_clusters(result, (int)entry[0], (int)entry[1], n);
+    if (PRINT_LOG){
+      printf("Iteartion #%d\n", iteration);
+      printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
+      print_int_matrix(result, 1, n);
+    }
+    
+  }
+
+  for (int i=0; i<n; i++) result[i] = get_parent(i, result);
+
+  if (PRINT_LOG){
+    printf("Cluster IDs:\n");
+    print_int_matrix(result, 1, n);
+    printf("Dendrogram:\n");
+    print_float_matrix(dendrogram, n-1, 3);
+  }
+
   free(dist_matrix);
   //num_bytes = N*N*sizeof(float);
   /* Copy initial array in temp */
@@ -168,43 +213,50 @@ void  seq_clustering(float * dataset, int n, int m, int* result)
 }
 
 void calculate_pairwise_dists(float * dataset, int n, int m, float * dist_matrix) {
-  memset(dist_matrix, FLT_MAX, (size_t) n*n*sizeof(float))
+  // O(n)
+  for (int i = 0; i < n*n; i++) dist_matrix[i] = FLT_MAX;
+  
+  // O(n*n*m)
   for (int i = 0; i < n; i++) {
     for (int j = i+1; j < n; j++) {
-      dist_matrix[index(i, j, n)] = calculate_dist(dataset[i], dataset[j]);
+      // O(m)
+      dist_matrix[index(i, j, n)] = calculate_dist(dataset, i, j, n);
     }
   }  
 }
 
-
-float calculate_dist(float* vec1, float* vec2, int dim) {
+// passing vec1_i and vec2_i instead of float * as dist_matrix is 1-D
+float calculate_dist(float * dataset, int vec1_i, int vec2_i, int dim) {
   float dist = 0;
-  for (int i = 0; i < dim; i++){
-    dist += pow(vec1[i] - vec2[i], 2);
+  // O(m)
+  for (int mi = 0; mi < dim; mi++){
+    dist += pow(dataset[vec1_i + mi] - dataset[vec2_i + mi], 2);
   }
   return sqrt(dist);
 }
 
 
-int get_parent(int i, int* parents) {
-  if (parents[i] == i) return i;
-  parents[i] = get_parent(parents[i]);
-  return parents[i];
+int get_parent(int curr_parent, int* parents) {
+  if (parents[curr_parent] == curr_parent) return curr_parent;
+  parents[curr_parent] = get_parent(parents[curr_parent], parents);
+  return parents[curr_parent];
+  // return get_parent(parents[curr_parent], parents);
 }
 
 
-void find_pairwise_min(float * dist_matrix, int n, int* indices, int* parents) {
-  indices[0] = 0;
-  indices[1] = 0;
-  float min_dist = FLT_MAX;
+void find_pairwise_min(float * dist_matrix, int n, float* entry, int* parents) {
+  entry[0] = 0;
+  entry[1] = 0;
+  entry[2] = FLT_MAX;
   for (int i = 0; i < n; i++) {
     for (int j = i+1; j < n; j++) {
-      if (get_parent(i, parents) != get_parent(j, parents)) {
+      if (get_parent(i, parents) != get_parent(j, parents)){
+      // if (parents[i] != parents[j]) {
         float curr_dist = dist_matrix[index(i, j, n)];
-        if (curr_dist < min_dist) {
-          min_dist = curr_dist;
-          indices[0] = i;
-          indices[1] = j;
+        if (curr_dist < entry[2]) {
+          entry[0] = i;
+          entry[1] = j;
+          entry[2] = curr_dist;
         }
       }
     }
@@ -212,13 +264,17 @@ void find_pairwise_min(float * dist_matrix, int n, int* indices, int* parents) {
 }
 
 
-void merge_clusters(int * result, int i, int j, int dim) {
-  if (!(i >= 0 && i < dim && j >= 0 && j < dim)) {
+void merge_clusters(int * result, int data_point_i, int data_point_j, int dim) {
+  if (!(data_point_i >= 0 && data_point_i < dim && data_point_j >= 0 && data_point_j < dim)) {
     printf("merge_clusters out of bounds");
     return;
   } 
-
-  result[j] = result[i];
+  // int cluster_j = result[data_point_j];
+  // for(int i=0; i<dim; i++)
+  //   if(result[i] == cluster_j)
+  //     result[i] = result[data_point_i];
+  int parent_i = get_parent(data_point_i, result);
+  result[get_parent(data_point_j, result)] = parent_i;
 } 
 
 /***************** The GPU version: Write your code here *********************/
