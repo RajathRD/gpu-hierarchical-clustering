@@ -156,7 +156,10 @@ int main(int argc, char * argv[])
 /*****************  The CPU sequential version (DO NOT CHANGE THAT) **************/
 void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* result, float * dendrogram)
 {
-  
+  // to measure time taken by a specific part of the code 
+  double time_taken;
+  clock_t start, end;
+
   /* Dynamically allocate another array for temp values */
   /* Dynamically allocate NxN array of floats */
   
@@ -175,18 +178,31 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
   }
 
   // O(n*n*m) -> GPU
+  start = clock();
   calculate_pairwise_dists(dataset, n, m, dist_matrix);
+  end = clock();
+
+  time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
+  printf("Time taken for distance computation: %lf\n", time_taken);
   
   for (int iteration=0; iteration < n - 1; iteration++) {
     
     float entry[3]; 
     // O(I*n*n) -> GPU
+    start = clock();
     find_pairwise_min(dist_matrix, n, entry, result);
+    end = clock();
+    time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
+    printf("Time taken for pairwise min, Iteration %d: %lf\n", iteration, time_taken);
     dendrogram[index(iteration, 0, 3)] = entry[0];
     dendrogram[index(iteration, 1, 3)] = entry[1];
     dendrogram[index(iteration, 2, 3)] = entry[2];
     // O(I*n) -> amortized O(I)
+    start = clock();
     merge_clusters(result, (int)entry[0], (int)entry[1], n);
+    end = clock();
+    time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
+    printf("Time taken for merge cluster, Iteration %d: %lf\n", iteration, time_taken);
     if (PRINT_LOG){
       printf("Iteartion #%d\n", iteration);
       printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
