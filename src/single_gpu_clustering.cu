@@ -74,9 +74,13 @@ int main(int argc, char * argv[])
 {
   //Define variables
   //unsigned int N; /* Dimention of NxN matrix */
-  int type_of_device = 0; // CPU or GPU
-  int n = 10;
-  int m = 2;
+  int type_of_device = atoi(argv[3]); // CPU or GPU
+  int n = atoi(argv[1]);
+  int m = atoi(argv[2]);
+
+  printf("Hierarchical Clustering:\n");
+  printf("Dataset size: %d x %d\n", n, m);
+  printf("Device Type: %d\n", type_of_device);
   
   // to measure time taken by a specific part of the code 
   double time_taken;
@@ -101,6 +105,7 @@ int main(int argc, char * argv[])
    exit(1);
   }
   load_data(dataset, n, m);
+  printf("Data loaded!\n");
   
   type_of_device = atoi(argv[3]);
 
