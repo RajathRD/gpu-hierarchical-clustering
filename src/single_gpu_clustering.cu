@@ -17,6 +17,7 @@
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
 #define PRINT_LOG 0
+#define PRINT_ANALYSIS 0
 /* Define constants */
 #define RANGE 100
 
@@ -188,7 +189,8 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-  printf("Time taken for distance computation: %lf\n", time_taken);
+  if (PRINT_ANALYSIS)
+    printf("Time taken for distance computation: %lf\n", time_taken);
   
   for (int iteration=0; iteration < n - 1; iteration++) {
     
@@ -198,7 +200,8 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
     find_pairwise_min(dist_matrix, n, entry, result);
     end = clock();
     time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-    printf("Time taken for pairwise min, Iteration %d: %lf\n", iteration, time_taken);
+    if (PRINT_ANALYSIS)
+      printf("Time taken for pairwise min, Iteration %d: %lf\n", iteration, time_taken);
     dendrogram[index(iteration, 0, 3)] = entry[0];
     dendrogram[index(iteration, 1, 3)] = entry[1];
     dendrogram[index(iteration, 2, 3)] = entry[2];
@@ -207,7 +210,8 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
     merge_clusters(result, (int)entry[0], (int)entry[1], n);
     end = clock();
     time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-    printf("Time taken for merge cluster, Iteration %d: %lf\n", iteration, time_taken);
+    if (PRINT_ANALYSIS)
+      printf("Time taken for merge cluster, Iteration %d: %lf\n", iteration, time_taken);
     if (PRINT_LOG){
       printf("Iteartion #%d\n", iteration);
       printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
@@ -235,25 +239,25 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
 
 void calculate_pairwise_dists(float * dataset, int n, int m, float * dist_matrix) {
   // O(n)
-  for (int i = 0; i < n*n; i++) dist_matrix[i] = FLT_MAX;
+  // for (int i = 0; i < n*n; i++) dist_matrix[i] = FLT_MAX;
   
   // O(n*n*m)
   for (int i = 0; i < n; i++) {
     for (int j = i+1; j < n; j++) {
       // O(m)
-      dist_matrix[index(i, j, n)] = calculate_dist(dataset, i, j, n);
+      dist_matrix[index(i, j, n)] = calculate_dist(dataset, i, j, m);
     }
   }  
 }
 
 // passing vec1_i and vec2_i instead of float * as dist_matrix is 1-D
-float calculate_dist(float * dataset, int vec1_i, int vec2_i, int dim) {
+float calculate_dist(float * dataset, int i, int j, int dim) {
   float dist = 0;
   // O(m)
   for (int mi = 0; mi < dim; mi++){
-    dist += pow(dataset[vec1_i + mi] - dataset[vec2_i + mi], 2);
+    dist += (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]) * (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]);
   }
-  return sqrt(dist);
+  return dist;
 }
 
 
