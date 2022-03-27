@@ -479,6 +479,10 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 //   }
 // }
 
+/*
+Chang D, Jones NA, Li D, Ouyang M, Ragade RK. Compute pairwise Euclidean distances of data points with GPUs.
+Proceedings of the IASTED International Symposium on Computational Biology and Bioinformatics 2008, 278-283.
+*/
 // __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matrix, unsigned int n, unsigned int m)
 // {
 //   int idx = threadIdx.x + blockDim.x * blockIdx.x;
