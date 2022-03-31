@@ -37,6 +37,8 @@ int get_parent(int, int *);
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
 __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int* parents, int * indices, float* values);
 __global__ void min_reduction(float *, float*, int);
+__global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n);
+__global__ void update_cluster(float * dist_matrix_d, int left_cluster, int right_cluster, int n);
 
 /*************************** Helper Functions **************************************/
 void print_float_matrix(float * a, int n, int m){
@@ -369,13 +371,19 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     float entry[3]; 
 
     // O(log n)
-    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, result, indices, values);
+    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, indices, values);
+
+    // Merge right cluster to left
     dendrogram[index(iteration, 0, 3)] = entry[0];
     dendrogram[index(iteration, 1, 3)] = entry[1];
     dendrogram[index(iteration, 2, 3)] = entry[2];
 
-    // O(I*n) -> amortized O(I)
-    merge_clusters(result, (int)entry[0], (int)entry[1], n);
+    // O(1)
+    // Update left cluster's distance with all others
+    update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, (int)entry[0], (int)entry[1], n);
+
+    // Remove right clusters from further consideration
+    remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, (int)entry[1], n);
   
     if (PRINT_LOG){
       printf("Iteartion #%d\n", iteration);
@@ -383,23 +391,64 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       print_int_matrix(result, 1, n);
     }
   }
+
   end = clock();
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   if (PRINT_ANALYSIS)
     printf("Time taken for merge cluster %lf\n", time_taken);
     
-  for (int i=0; i<n; i++) result[i] = get_parent(i, result);
+  // for (int i=0; i<n; i++) result[i] = get_parent(i, result);
 
-  if (PRINT_LOG){
-    printf("Cluster IDs:\n");
-    print_int_matrix(result, 1, n);
-    printf("Dendrogram:\n");
-    print_float_matrix(dendrogram, n-1, 3);
-  }
+  // if (PRINT_LOG){
+  //   printf("Cluster IDs:\n");
+  //   print_int_matrix(result, 1, n);
+  //   printf("Dendrogram:\n");
+  //   print_float_matrix(dendrogram, n-1, 3);
+  // }
 
   free(dist_matrix);
   cudaFree(dataset_d);
   cudaFree(dist_matrix_d);
+}
+
+/*
+  Right is being merged to left
+  So remove all distance entries for right with any other cluster 
+*/ 
+__global__ void update_cluster(float * dist_matrix_d, int left_cluster, int right_cluster, int n) {
+
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+  if (index >= n) return;
+
+  int i = index/n;
+  int j = index%n;
+  if (i == left_cluster) {
+    float new_min = min(dist_matrix_d[index(i, j, n)], dist_matrix_d[index(right_cluster, j, n)]);
+    dist_matrix_d[index(i, j, n)] = new_min;
+  } else if (j == left_cluster) {
+    float new_min = min(dist_matrix_d[index(i, j, n)], dist_matrix_d[index(i, right_cluster, n)]);
+    dist_matrix_d[index(i, j, n)] = new_min;
+  }
+
+  __syncthreads();
+}
+
+/*
+  Right is being merged to left
+  So remove all distance entries for right with any other cluster 
+*/ 
+__global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n) {
+
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+  if (index >= n) return;
+
+  int i = index/n;
+  int j = index%n;
+  if (i == right_cluster || j == right_cluster) {
+    dist_matrix_d[index] = FLT_MAX;
+  }
+
+  __syncthreads();
 }
 
 __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matrix, unsigned int n, unsigned int m)
@@ -409,25 +458,25 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
   if (index < n*n){
     int i = index / n;
     int j = index % n;
-    if (i<n && j < n){
-    float dist = 0;
-    for(int mi=0; mi<m; mi++){
-      float x = (dataset[index(i, mi, m)] - dataset[index(j,mi,m)]);
-      dist += x * x;
-    }
-    dist_matrix[index(i, j, n)] = dist;
+    if (i<n && j < n) {
+      float dist = 0;
+      for(int mi=0; mi<m; mi++){
+        float x = (dataset[index(i, mi, m)] - dataset[index(j,mi,m)]);
+        dist += x * x;
+      }
+      dist_matrix[index(i, j, n)] = dist;
     }
   }
 }
 
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int* parents, int * indices, float* values) {
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int * indices, float* values) {
   entry[0] = 0;
   entry[1] = 0;
   entry[2] = FLT_MAX;
 
   int index = threadIdx.x + blockIdx.x * blockDim.x;
 
-  // needs to be shared
+  // indices and values needs to be shared
   // extern __shared__ int indices[];
   // extern __shared__ float values[];
   for (int stride = n*n/2; stride > 0; stride /= 2) {
@@ -443,14 +492,6 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
         right_val = dist_matrix_d[right_idx];
       }
 
-      // Do not consider data points i and j if they belong to the same cluster
-      if (get_parent(left_idx/n, parents) == get_parent(left_idx%n, parents)) {
-        left_val = FLT_MAX;
-      }
-      if (get_parent(right_idx/n, parents) == get_parent(right_idx%n, parents)) {
-        right_val = FLT_MAX;
-      }
-
       if (left_val <= right_val) {
         indices[left_idx] = left_idx;
         values[left_idx] = left_val;
@@ -463,10 +504,20 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
 
   __syncthreads();
 
-  int min_idx = indices[0];
   int min_val = values[0];
-  entry[0] = min_idx/n;
-  entry[1] = min_idx%n;
+  int i = indices[0]/n;
+  int j = indices[0]%n;
+
+  // Always i should be smaller than j
+  // That is cluster with higher index gets merged to the cluster with lower index
+  if (i > j) {
+    int temp = i;
+    i = j;
+    j = i;
+  } 
+
+  entry[0] = i;
+  entry[1] = j;
   entry[2] = min_val;
 }
 
