@@ -69,9 +69,7 @@ void load_data(float * dataset, int n, int m) {
 }
 
 void load_test_data(float * dataset) {
-  int n = 6;
-  int m = 2;
-  float arr[n][m] = {
+  float arr[6][2] = {
     {0.0,0.0},
     {1.0,1.0},
     {10.0,10.0},
@@ -79,6 +77,8 @@ void load_test_data(float * dataset) {
     {-100.0,-100.0},
     {-111.0,111.0}};
 
+  int n = 6;
+  int m = 2;
 
   for (int i = 0; i < n; i ++) {
     for (int j = 0; j < m; j++) {
