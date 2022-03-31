@@ -399,12 +399,12 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     
   // for (int i=0; i<n; i++) result[i] = get_parent(i, result);
 
-  // if (PRINT_LOG){
-  //   printf("Cluster IDs:\n");
+   if (PRINT_LOG){
+  //  printf("Cluster IDs:\n");
   //   print_int_matrix(result, 1, n);
-  //   printf("Dendrogram:\n");
-  //   print_float_matrix(dendrogram, n-1, 3);
-  // }
+     printf("Dendrogram:\n");
+     print_float_matrix(dendrogram, n-1, 3);
+   }
 
   free(dist_matrix);
   cudaFree(dataset_d);
