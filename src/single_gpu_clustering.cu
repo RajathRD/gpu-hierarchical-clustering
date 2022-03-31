@@ -344,6 +344,12 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   // O(1)
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
+  cudaDeviceSynchronize();
+  cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+  if (PRINT_LOG) {
+    printf("Dist Matrix:\n");
+    print_float_matrix(dist_matrix, n, n);
+  }
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
@@ -364,6 +370,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 
     // O(log n)
     find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, indices, values);
+    cudaDeviceSynchronize();
 
     // Merge right cluster to left
     dendrogram[index(iteration, 0, 3)] = entry[0];
@@ -373,9 +380,11 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     // O(1)
     // Update left cluster's distance with all others
     update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, (int)entry[0], (int)entry[1], n);
+    cudaDeviceSynchronize();
 
     // Remove right clusters from further consideration
     remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, (int)entry[1], n);
+    cudaDeviceSynchronize();
   
     if (PRINT_LOG){
       printf("Iteartion #%d\n", iteration);
