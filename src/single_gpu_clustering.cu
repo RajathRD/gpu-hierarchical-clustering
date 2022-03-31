@@ -524,9 +524,9 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
       left_idx, indices[left_idx], left_val, right_idx, indices[right_idx], right_val, index, stride, n);
 
       if (left_val <= right_val) {
-        indices[left_idx] = indices[left_idx];
+        indices[left_idx] = (stride == n*n/2) ? left_idx : indices[left_idx];
       } else {
-        indices[left_idx] = indices[right_idx];
+        indices[left_idx] = (stride == n*n/2) ? right_idx : indices[right_idx];
       }
     }
   }
