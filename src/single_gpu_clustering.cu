@@ -372,6 +372,8 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, indices, values);
     cudaDeviceSynchronize();
 
+    printf("Here");
+
     // Merge right cluster to left
     int min_val = values[0];
     int i = indices[0]/n;
