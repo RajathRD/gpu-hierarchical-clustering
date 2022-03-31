@@ -554,3 +554,15 @@ __global__ void min_reduction(float *arr, float* block_mins, int n)
   if (threadIdx.x == 0)
     block_mins[blockIdx.x] = arr[0];
 }
+
+
+
+/*
+ 1. Improve CPU version to n^2 long n or n^2 
+ 2. GPU get pairwise min parallel reduction
+ 3. Merging/updating matrices
+
+ 4. Testing/Validation - till GPU runs out of memory
+ 5. Improvements
+
+*/
