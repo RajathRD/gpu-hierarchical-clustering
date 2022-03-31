@@ -35,6 +35,7 @@ int get_parent(int, int *);
 
 // Kernel functions
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int* parents);
 __global__ void min_reduction(float *, float*, int);
 
 /*************************** Helper Functions **************************************/
