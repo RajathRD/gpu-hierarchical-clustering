@@ -6,3 +6,4 @@
 *.fatbin
 *a.out
 src/single_gpu_clustering
+.vscode
