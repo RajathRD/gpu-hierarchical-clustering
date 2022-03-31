@@ -68,6 +68,30 @@ void load_data(float * dataset, int n, int m) {
   }
 }
 
+void load_test_data(float * dataset) {
+  int n = 6;
+  int m = 2;
+  float arr[n][m] = {
+    {0.0,0.0},
+    {1.0,1.0},
+    {10.0,10.0},
+    {11.0,11.0},
+    {-100.0,-100.0},
+    {-111.0,111.0}};
+
+
+  for (int i = 0; i < n; i ++) {
+    for (int j = 0; j < m; j++) {
+      dataset[index(i, j, m)] = arr[i][j];
+    } 
+  }
+
+  if (PRINT_LOG){
+    printf("Dataset:\n");
+    print_float_matrix(dataset, n, m);
+  }
+}
+
 
 /**************************** main() *************************************/
 int main(int argc, char * argv[])
@@ -104,7 +128,8 @@ int main(int argc, char * argv[])
    fprintf(stderr, " Cannot allocate the %u x %u array\n", n, m);
    exit(1);
   }
-  load_data(dataset, n, m);
+  //load_data(dataset, n, m);
+  load_test_data(dataset);
   printf("Data loaded!\n");
   
   type_of_device = atoi(argv[3]);
@@ -284,6 +309,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   int num_bytes = n*n*sizeof(float);
   for (int i = 0; i < n; i++) result[i] = i;
 
+  // FIXME: Why we have dist_matrix in main memory? do we need it?
   float* dist_matrix = (float *)calloc(n*n, sizeof(float));
   if( !dist_matrix )
   {
@@ -318,12 +344,11 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   start = clock();
   // call kernel
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
-//  calculate_pairwise_dists(dataset, n, m, dist_matrix);
-  cudaMemcpy(dist_matrix, dist_matrix_d, num_bytes, cudaMemcpyDeviceToHost);
-  if (PRINT_LOG){
-    printf("Dist Matrix:\n");
-    print_float_matrix(dist_matrix, n, n);
-  }
+  // cudaMemcpy(dist_matrix, dist_matrix_d, num_bytes, cudaMemcpyDeviceToHost);
+  // if (PRINT_LOG){
+  //   printf("Dist Matrix:\n");
+  //   print_float_matrix(dist_matrix, n, n);
+  // }
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
@@ -331,16 +356,21 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     printf("Time taken for distance computation: %lf\n", time_taken);
   
   start = clock();
+
+  // O(n)
   for (int iteration=0; iteration < n - 1; iteration++) {
     float entry[3]; 
-    // O(I*n*n) -> GPU
     
-    find_pairwise_min(dist_matrix, n, entry, result);
+    // O(log n)
+    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, result);
     dendrogram[index(iteration, 0, 3)] = entry[0];
     dendrogram[index(iteration, 1, 3)] = entry[1];
     dendrogram[index(iteration, 2, 3)] = entry[2];
+
+    // remove pair from future consideration
+    dist_matrix_d[index(entry[0], entry[1], n)] = FLT_MAX;
+
     // O(I*n) -> amortized O(I)
-    
     merge_clusters(result, (int)entry[0], (int)entry[1], n);
   
     if (PRINT_LOG){
@@ -348,7 +378,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
       print_int_matrix(result, 1, n);
     }
-    
   }
   end = clock();
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
@@ -367,40 +396,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   free(dist_matrix);
   cudaFree(dataset_d);
   cudaFree(dist_matrix_d);
-  //num_bytes = N*N*sizeof(float);
-  /* Copy initial array in temp */
-  //memcpy((void *)temp, (void *) playground, num_bytes);
-  /* Move new values into old values */ 
-  //memcpy((void *)playground, (void *) temp, num_bytes);
 }
-// void  gpu_heat_dist(float * playground, unsigned int n, unsigned int m, int * result, float * dendrogram)
-// {
-
-//   size_t num_bytes = n*n*sizeof(float);
-//   float * cluster_dists;
-
-//   // Move data to device memory
-//   cudaMalloc((void**) &playground_d, num_bytes);
-//   cudaMemcpy(playground_d, playground, num_bytes, cudaMemcpyHostToDevice);
-
-//   // Maximum number of threads per block in cuda1.cims.nyu.edu 
-//   int thread_cnt = 1024;
-//   int block_cnt = (int) ceil((double) N*N / thread_cnt);
-
-//   float * temp_d;
-//   cudaMalloc((void**) &temp_d, num_bytes);
-//   cudaMemcpy(temp_d, playground_d, num_bytes, cudaMemcpyDeviceToDevice);
-//   for (int k = 0; k < iterations; k++) 
-//   {           
-//     calculateMatrix<<<block_cnt, thread_cnt>>>(temp_d, playground_d, N);
-//     cudaMemcpy(playground_d, temp_d, num_bytes, cudaMemcpyDeviceToDevice); 
-//   }
-
-//   // Move new values into old values
-//   cudaMemcpy(playground, temp_d, num_bytes, cudaMemcpyDeviceToHost);
-//   cudaFree(playground_d);
-//   cudaFree(temp_d);
-// }
 
 __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matrix, unsigned int n, unsigned int m)
 {
@@ -418,6 +414,47 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
     dist_matrix[index(i, j, n)] = dist;
     }
   }
+}
+
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int* parents) {
+  entry[0] = 0;
+  entry[1] = 0;
+  entry[2] = FLT_MAX;
+
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+  __shared__ int indices[n*n];
+  __shared__ int values[n*n];
+  for (int stride = n*n/2; stride > 0; stride /= 2) {
+    __syncthreads();
+    if (index < stride) {
+      int left_idx = (stride == n*n/2) ? index : indices[index];
+      int right_idx = (stride == n*n/2) ? index + stride : indices[index+stride];
+
+      float left_val = dist_matrix_d[left_idx];
+      // We can be outside of boundary in first iteration, handle it gracefully
+      if (right_idx < n*n) {
+        float right_val = dist_matrix_d[right_idx];
+      } else {
+        float right_val = FLT_MAX;
+      }
+
+      if (left_val <= right_val) {
+        indices[left] = left;
+        values[left] = left_val;
+      } else {
+        indices[left] = right;
+        values[left] = right_val;
+      }
+    }
+  }
+
+  __syncthreads();
+
+  int min_idx = indices[0];
+  int min_val = values[0];
+  entry[0] = min_idx/n;
+  entry[1] = min_idx%n;
+  entry[2] = min_val;
 }
 
 // This is a multi block parralell reduction
