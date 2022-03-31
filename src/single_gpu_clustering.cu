@@ -344,7 +344,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   // O(1)
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
-  cudaMemcpy(dist_matrix, dist_matrix_d, num_bytes, cudaMemcpyDeviceToHost);
+  // cudaMemcpy(dist_matrix, dist_matrix_d, num_bytes, cudaMemcpyDeviceToHost);
   if (PRINT_LOG) {
     printf("Dist Matrix:\n");
     print_float_matrix(dist_matrix, n, n);
