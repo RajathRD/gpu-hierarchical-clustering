@@ -369,11 +369,11 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     float entry[3]; 
 
     // O(log n)
-    printf("BEFORE");
+    printf("BEFORE\n");
     find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, indices, values);
-    printf("AFTER");
+    printf("AFTER\n");
     cudaDeviceSynchronize();
-    printf("AFTER-2");
+    printf("AFTER-2\n");
     // Merge right cluster to left
     int min_val = values[0];
     int i = indices[0]/n;
@@ -509,14 +509,14 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
   for (int stride = n*n/2; stride > 0; stride /= 2) {
     __syncthreads();
     if (index < stride) {
-      int left_idx = (stride == n*n/2) ? index : indices[index];
-      int right_idx = (stride == n*n/2) ? index + stride : indices[index+stride];
+      int left_idx = index;
+      int right_idx = index + stride;
 
-      float left_val = dist_matrix_d[left_idx];
+      float left_val = (stride == n*n/2) ? dist_matrix_d[left_idx] : values[left_idx];
       // We can be outside of boundary in first iteration, handle it gracefully
       float right_val = FLT_MAX;
       if (right_idx < n*n) {
-        right_val = dist_matrix_d[right_idx];
+        right_val = (stride == n*n/2) ? dist_matrix_d[right_idx] : values[right_idx];
       }
 
       printf("find_pairwise_min_cuda - left_idx %d, left_val %.2f and right_idx %d, right_val %.2f | index %d, stride %d, n %d\n", 
