@@ -35,7 +35,7 @@ int get_parent(int, int *);
 
 // Kernel functions
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int* parents, int * indices, float* values);
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int * indices, float* values);
 __global__ void min_reduction(float *, float*, int);
 __global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n);
 __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int right_cluster, int n);
@@ -513,7 +513,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
   if (i > j) {
     int temp = i;
     i = j;
-    j = i;
+    j = temp;
   } 
 
   entry[0] = i;
