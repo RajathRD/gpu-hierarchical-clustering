@@ -464,12 +464,15 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
     int i = index / n;
     int j = index % n;
     if (i<n && j < n) {
-      float dist = 0;
-      for(int mi=0; mi<m; mi++){
-        float x = (dataset[index(i, mi, m)] - dataset[index(j,mi,m)]);
-        dist += x * x;
+      if (i == j) dist_matrix[index(i, j, n)] = FLT_MAX;
+      else {
+        float dist = 0;
+        for(int mi=0; mi<m; mi++){
+          float x = (dataset[index(i, mi, m)] - dataset[index(j,mi,m)]);
+          dist += x * x;
+        }
+        dist_matrix[index(i, j, n)] = dist;
       }
-      dist_matrix[index(i, j, n)] = dist;
     }
   }
 }
@@ -497,7 +500,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
         right_val = dist_matrix_d[right_idx];
       }
 
-      printf("find_pairwise_min_cuda - left_idx %d, left_val %.2f and right_idx %d, right_val %.2f | index %d, stride %d, n\n", 
+      printf("find_pairwise_min_cuda - left_idx %d, left_val %.2f and right_idx %d, right_val %.2f | index %d, stride %d, n %d\n", 
       left_idx, left_val, right_idx, right_val, index, stride, n);
 
       if (left_val <= right_val) {
