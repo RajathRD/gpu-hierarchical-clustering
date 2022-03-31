@@ -344,11 +344,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   // O(1)
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
-  cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-  if (PRINT_LOG) {
-    printf("Dist Matrix:\n");
-    print_float_matrix(dist_matrix, n, n);
-  }
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
@@ -387,6 +382,12 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
       // print_int_matrix(result, 1, n);
     }
+  }
+
+  cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+  if (PRINT_LOG) {
+    printf("Dist Matrix:\n");
+    print_float_matrix(dist_matrix, n, n);
   }
 
   end = clock();
@@ -487,7 +488,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
         right_val = dist_matrix_d[right_idx];
       }
 
-      printf("find_pairwise_min_cuda - left_idx %d, left_val %.2f and right_idx %d, right_val %.2f | index %d, stride %d", 
+      printf("find_pairwise_min_cuda - left_idx %d, left_val %.2f and right_idx %d, right_val %.2f | index %d, stride %d\n", 
       index, stride, left_idx, left_val, right_idx, right_val);
 
       if (left_val <= right_val) {
