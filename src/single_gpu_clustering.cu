@@ -15,7 +15,7 @@
 #define index(i, j, N)  ((i)*(N)) + (j)
 
 /* Config params */
-#define PRINT_LOG 0
+#define PRINT_LOG 1
 #define PRINT_ANALYSIS 1
 /* Define constants */
 #define RANGE 100
@@ -129,8 +129,8 @@ int main(int argc, char * argv[])
    fprintf(stderr, " Cannot allocate the %u x %u array\n", n, m);
    exit(1);
   }
-  //load_data(dataset, n, m);
-  load_test_data(dataset);
+  load_data(dataset, n, m);
+  //load_test_data(dataset);
   printf("Data loaded!\n");
   
   type_of_device = atoi(argv[3]);
@@ -369,7 +369,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     dendrogram[index(iteration, 2, 3)] = entry[2];
 
     // remove pair from future consideration
-    dist_matrix_d[index(entry[0], entry[1], n)] = FLT_MAX;
+    dist_matrix_d[index((int) entry[0], (int) entry[1], n)] = FLT_MAX;
 
     // O(I*n) -> amortized O(I)
     merge_clusters(result, (int)entry[0], (int)entry[1], n);
@@ -423,8 +423,9 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
   entry[2] = FLT_MAX;
 
   int index = threadIdx.x + blockIdx.x * blockDim.x;
-  __shared__ int indices[n*n];
-  __shared__ int values[n*n];
+  const int size = 64;
+  extern __shared__ int indices[];
+  extern __shared__ float values[];
   for (int stride = n*n/2; stride > 0; stride /= 2) {
     __syncthreads();
     if (index < stride) {
