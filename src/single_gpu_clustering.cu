@@ -306,7 +306,7 @@ void merge_clusters(int * result, int data_point_i, int data_point_j, int dim) {
 void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * result, float * dendrogram){
   double time_taken;
   clock_t start, end;
-  int num_bytes = n*n*sizeof(float);
+  // int num_bytes = n*n*sizeof(float);
   for (int i = 0; i < n; i++) result[i] = i;
 
   // FIXME: Why we have dist_matrix in main memory? do we need it?
@@ -432,18 +432,17 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
 
       float left_val = dist_matrix_d[left_idx];
       // We can be outside of boundary in first iteration, handle it gracefully
+      float right_val = FLT_MAX;
       if (right_idx < n*n) {
-        float right_val = dist_matrix_d[right_idx];
-      } else {
-        float right_val = FLT_MAX;
+        right_val = dist_matrix_d[right_idx];
       }
 
       if (left_val <= right_val) {
-        indices[left] = left;
-        values[left] = left_val;
+        indices[left_idx] = left_idx;
+        values[left_idx] = left_val;
       } else {
-        indices[left] = right;
-        values[left] = right_val;
+        indices[left_idx] = right_idx;
+        values[left_idx] = right_val;
       }
     }
   }
