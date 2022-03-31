@@ -275,7 +275,7 @@ void find_pairwise_min(float * dist_matrix, int n, float* entry, int* parents) {
   entry[2] = FLT_MAX;
   for (int i = 0; i < n; i++) {
     for (int j = i+1; j < n; j++) {
-      if (get_parent(i, parents) != get_parent(j, parents)){
+      if (get_parent(i, parents) != get_parent(j, parents)) {
       // if (parents[i] != parents[j]) {
         float curr_dist = dist_matrix[index(i, j, n)];
         if (curr_dist < entry[2]) {
@@ -358,18 +358,21 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   
   start = clock();
 
+  // Needs to be shared
+  int * indices;
+  cudaMalloc((void**) &indices, n*n*sizeof(int));
+  float * values;
+  cudaMalloc((void**) &values, n*n*sizeof(float));
+
   // O(n)
   for (int iteration=0; iteration < n - 1; iteration++) {
     float entry[3]; 
-    
+
     // O(log n)
-    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, result);
+    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, result, indices, values);
     dendrogram[index(iteration, 0, 3)] = entry[0];
     dendrogram[index(iteration, 1, 3)] = entry[1];
     dendrogram[index(iteration, 2, 3)] = entry[2];
-
-    // remove pair from future consideration
-    dist_matrix_d[index((int) entry[0], (int) entry[1], n)] = FLT_MAX;
 
     // O(I*n) -> amortized O(I)
     merge_clusters(result, (int)entry[0], (int)entry[1], n);
@@ -417,15 +420,16 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
   }
 }
 
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int* parents) {
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int* parents, int * indices, float* values) {
   entry[0] = 0;
   entry[1] = 0;
   entry[2] = FLT_MAX;
 
   int index = threadIdx.x + blockIdx.x * blockDim.x;
-  const int size = 64;
-  extern __shared__ int indices[];
-  extern __shared__ float values[];
+
+  // needs to be shared
+  // extern __shared__ int indices[];
+  // extern __shared__ float values[];
   for (int stride = n*n/2; stride > 0; stride /= 2) {
     __syncthreads();
     if (index < stride) {
@@ -437,6 +441,14 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
       float right_val = FLT_MAX;
       if (right_idx < n*n) {
         right_val = dist_matrix_d[right_idx];
+      }
+
+      // Do not consider data points i and j if they belong to the same cluster
+      if (get_parent(left_idx/n, parents) == get_parent(left_idx%n, parents)) {
+        left_val = FLT_MAX;
+      }
+      if (get_parent(right_idx/n, parents) == get_parent(right_idx%n, parents)) {
+        right_val = FLT_MAX;
       }
 
       if (left_val <= right_val) {
