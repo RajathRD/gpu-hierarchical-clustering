@@ -314,22 +314,21 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 
   // FIXME: Why we have dist_matrix in main memory? do we need it?
   float* dist_matrix = (float *)calloc(n*n, sizeof(float));
-  if( !dist_matrix )
-  {
+  if( !dist_matrix ) {
    fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
    exit(1);
   }
 
   float * dist_matrix_d;
   cudaMalloc((void**) &dist_matrix_d, n*n*sizeof(float));
-  if (!dist_matrix_d){
+  if (!dist_matrix_d) {
     fprintf(stderr, " Cannot allocate cuda dist_matrix %u array\n", n*n);
     exit(1);
   }
 
   float * dataset_d;
   cudaMalloc((void**) &dataset_d, n*m*sizeof(float));
-  if (!dataset_d){
+  if (!dataset_d) {
     fprintf(stderr, " Cannot allocate cuda dataset %u array\n", n*n);
     exit(1);
   }
@@ -337,21 +336,19 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   cudaMemcpy(dist_matrix_d, dist_matrix, n*n*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(dataset_d, dataset, n*m*sizeof(float), cudaMemcpyHostToDevice);
 
-
   // Maximum number of threads per block in cuda1.cims.nyu.edu 
   int thread_cnt = 1024;
   int block_cnt = (int) ceil((float)n*n / thread_cnt);
   printf("Launching kernel with %d blocks and %d threads\n", block_cnt, thread_cnt);
 
-  // O(n*n*m) -> GPU
+  // O(1)
   start = clock();
-  // call kernel
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
-  // cudaMemcpy(dist_matrix, dist_matrix_d, num_bytes, cudaMemcpyDeviceToHost);
-  // if (PRINT_LOG){
-  //   printf("Dist Matrix:\n");
-  //   print_float_matrix(dist_matrix, n, n);
-  // }
+  cudaMemcpy(dist_matrix, dist_matrix_d, num_bytes, cudaMemcpyDeviceToHost);
+  if (PRINT_LOG) {
+    printf("Dist Matrix:\n");
+    print_float_matrix(dist_matrix, n, n);
+  }
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
@@ -360,7 +357,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   
   start = clock();
 
-  // Needs to be shared
+  // Needs to be in shared memory
   int * indices;
   cudaMalloc((void**) &indices, n*n*sizeof(int));
   float * values;
@@ -388,7 +385,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     if (PRINT_LOG){
       printf("Iteartion #%d\n", iteration);
       printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
-      print_int_matrix(result, 1, n);
+      // print_int_matrix(result, 1, n);
     }
   }
 
@@ -397,8 +394,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   if (PRINT_ANALYSIS)
     printf("Time taken for merge cluster %lf\n", time_taken);
     
-  // for (int i=0; i<n; i++) result[i] = get_parent(i, result);
-
    if (PRINT_LOG){
   //  printf("Cluster IDs:\n");
   //   print_int_matrix(result, 1, n);
