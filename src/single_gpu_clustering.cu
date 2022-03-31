@@ -373,6 +373,23 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     cudaDeviceSynchronize();
 
     // Merge right cluster to left
+    int min_val = values[0];
+    int i = indices[0]/n;
+    int j = indices[0]%n;
+
+    // Always i should be smaller than j
+    // That is cluster with higher index gets merged to the cluster with lower index
+    if (i > j) {
+      int temp = i;
+      i = j;
+      j = temp;
+    } 
+
+    printf("--> i %d, j %d, min_val %.2f", i, j, min_val);
+
+    entry[0] = i;
+    entry[1] = j;
+    entry[2] = min_val;
     dendrogram[index(iteration, 0, 3)] = entry[0];
     dendrogram[index(iteration, 1, 3)] = entry[1];
     dendrogram[index(iteration, 2, 3)] = entry[2];
@@ -512,26 +529,6 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
       }
     }
   }
-
-  __syncthreads();
-
-  int min_val = values[0];
-  int i = indices[0]/n;
-  int j = indices[0]%n;
-
-  // Always i should be smaller than j
-  // That is cluster with higher index gets merged to the cluster with lower index
-  if (i > j) {
-    int temp = i;
-    i = j;
-    j = temp;
-  } 
-
-  printf("find_pairwise_min_cuda - res: i %d, j %d, min_val %.2f", i, j, min_val);
-
-  entry[0] = i;
-  entry[1] = j;
-  entry[2] = min_val;
 }
 
 // This is a multi block parralell reduction
