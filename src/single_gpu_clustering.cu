@@ -376,12 +376,12 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     printf("AFTER-2\n");
     // Merge right cluster to left
     int* min_val_idx;
-    if(!(min_val_idx = (int *) malloc(1*sizeof(int)))) {
+    if(!(min_val_idx = (int *) malloc(n*n*sizeof(int)))) {
       printf("Error allocating min_val_idx\n");
       exit(1);
     }
 
-    cudaMemcpy(min_val_idx, indices, sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(min_val_idx, indices, n*n*sizeof(int), cudaMemcpyDeviceToHost);
     printf("AFTER-22\n");
 
 
