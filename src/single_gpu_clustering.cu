@@ -36,7 +36,7 @@ int get_parent(int, int *);
 
 // Kernel functions
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices, float* values);
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices);
 __global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n);
 __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int right_cluster, int n);
 
@@ -337,15 +337,13 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   // Needs to be in shared memory
   int * indices;
   cudaMalloc((void**) &indices, n*n*sizeof(int));
-  float * values;
-  cudaMalloc((void**) &values, n*n*sizeof(float));
 
   // O(n)
   for (int iteration=0; iteration < n - 1; iteration++) {
     // printf("\n\n --> iteration = %d\n", iteration);
 
     // O(log n)
-    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, indices, values);
+    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, indices);
     cudaDeviceSynchronize();
 
     // Move min value index to host memory
@@ -472,12 +470,13 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
   }
 }
 
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices, float* values) {
+/*
+  Finds minimum index of a minimum element in an array
+  FIXME: See if you can optimize this method.
+*/
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices) {
   int index = threadIdx.x + blockIdx.x * blockDim.x;
 
-  // indices and values needs to be shared
-  // extern __shared__ int indices[];
-  // extern __shared__ float values[];
   int stride = n*n/2;
   while (true) {
     __syncthreads();
@@ -508,8 +507,6 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
     if (stride == 0) break;
     stride /= 2;
   }
-
-  //printf("find_pairwise_min_cuda (END) - indices[0]: %d\n", indices[0]);
 }
 
 
@@ -528,6 +525,5 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
     ./single_gpu_clustering 7 2 1
  
   - TODO: Update arg checks for 4 inputs as well as for tests
-  - TODO: Add sample tests for GPU version 
-
+  - TODO: Add tester in a separate file with sample tests for GPU version
 */
