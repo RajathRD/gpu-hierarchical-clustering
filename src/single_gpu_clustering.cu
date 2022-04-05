@@ -342,7 +342,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
 
   // O(n)
   for (int iteration=0; iteration < n - 1; iteration++) {
-    printf("\n\niteration = %d\n", iteration);
+    // printf("\n\n --> iteration = %d\n", iteration);
 
     // O(log n)
     find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, indices, values);
@@ -379,7 +379,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
       i = temp;
     }
 
-    printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
+    // printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
 
     dendrogram[index(iteration, 0, 3)] = (float) i;
     dendrogram[index(iteration, 1, 3)] = (float) j;
