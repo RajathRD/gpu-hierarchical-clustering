@@ -467,7 +467,7 @@ __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int righ
 
   int i = index/n;
   int j = index%n;
-  
+
   if (i == j) return;
 
   if (i == left_cluster) {
@@ -492,9 +492,10 @@ __global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n) 
 
   int i = index/n;
   int j = index%n;
+    printf("remove_cluster | i: %d, j: %d, index: %d, dist_matrix_d[index]: %.2f, right_cluster: %d\n", i, j, index, dist_matrix_d[index], right_cluster);
   if (i == right_cluster || j == right_cluster) {
     dist_matrix_d[index] = FLT_MAX;
-    printf("remove_cluster - i == right_cluster || j == right_cluster| i: %d, j: %d, index: %d, dist_matrix_d[index]: %.2f\n", i, j, index, dist_matrix_d[index]);
+    printf("remove_cluster - i == right_cluster || j == right_cluster | i: %d, j: %d, index: %d, dist_matrix_d[index]: %.2f, right_cluster: %d\n", i, j, index, dist_matrix_d[index], right_cluster);
   }
 }
 
