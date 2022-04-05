@@ -71,29 +71,29 @@ void load_data(float * dataset, int n, int m) {
   }
 }
 
-void load_test_data(float * dataset) {
-  float arr[6][2] = {
-    {0.0,0.0},
-    {1.0,1.0},
-    {10.0,10.0},
-    {11.0,11.0},
-    {-100.0,-100.0},
-    {-111.0,111.0}};
+// void load_test_data(float * dataset) {
+//   float arr[6][2] = {
+//     {0.0,0.0},
+//     {1.0,1.0},
+//     {10.0,10.0},
+//     {11.0,11.0},
+//     {-100.0,-100.0},
+//     {-111.0,111.0}};
 
-  int n = 6;
-  int m = 2;
+//   int n = 6;
+//   int m = 2;
 
-  for (int i = 0; i < n; i ++) {
-    for (int j = 0; j < m; j++) {
-      dataset[index(i, j, m)] = arr[i][j];
-    } 
-  }
+//   for (int i = 0; i < n; i ++) {
+//     for (int j = 0; j < m; j++) {
+//       dataset[index(i, j, m)] = arr[i][j];
+//     } 
+//   }
 
-  if (PRINT_LOG){
-    printf("Dataset:\n");
-    print_float_matrix(dataset, n, m);
-  }
-}
+//   if (PRINT_LOG){
+//     printf("Dataset:\n");
+//     print_float_matrix(dataset, n, m);
+//   }
+// }
 
 
 /**************************** main() *************************************/
@@ -156,6 +156,13 @@ int main(int argc, char * argv[])
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   
   printf("Time taken for %s is %lf\n", type_of_device == 0? "CPU" : "GPU", time_taken);
+
+  if (PRINT_LOG){
+    printf("Cluster IDs:\n");
+    print_int_matrix(result, 1, n);
+    printf("Dendrogram:\n");
+    print_float_matrix(dendrogram, n-1, 3);
+  }
 
   free(dataset);
   free(result);
@@ -227,13 +234,6 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
       printf("Time taken for merge cluster, Iteration %lf\n",time_taken);
     
   for (int i=0; i<n; i++) result[i] = get_parent(i, result);
-
-  if (PRINT_LOG){
-    printf("Cluster IDs:\n");
-    print_int_matrix(result, 1, n);
-    printf("Dendrogram:\n");
-    print_float_matrix(dendrogram, n-1, 3);
-  }
 
   free(dist_matrix);
 }
@@ -309,10 +309,9 @@ void merge_clusters(int * result, int data_point_i, int data_point_j, int dim) {
 void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * result, float * dendrogram){
   double time_taken;
   clock_t start, end;
-  // int num_bytes = n*n*sizeof(float);
   for (int i = 0; i < n; i++) result[i] = i;
 
-  // FIXME: Why we have dist_matrix in main memory? do we need it?
+  // FIXME: Remove this in final cleanup, here only for testing
   // float* dist_matrix = (float *)calloc(n*n, sizeof(float));
   // if( !dist_matrix ) {
   //  fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
@@ -332,8 +331,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     fprintf(stderr, " Cannot allocate cuda dataset %u array\n", n*n);
     exit(1);
   }
-
-  // cudaMemcpy(dist_matrix_d, dist_matrix, n*n*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(dataset_d, dataset, n*m*sizeof(float), cudaMemcpyHostToDevice);
 
   // Maximum number of threads per block in cuda1.cims.nyu.edu 
@@ -366,11 +363,10 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 
   // O(n)
   for (int iteration=0; iteration < n - 1; iteration++) {
-
     // O(log n)
     find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, indices, values);
     cudaDeviceSynchronize();
-    // ******************** START: Merge right cluster to left ********************
+
     // Move min value index to host memory
     int* min_val_idx;
     if(!(min_val_idx = (int *) malloc(sizeof(int)))) {
@@ -395,60 +391,24 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     free(min_val);
     free(min_val_idx);
 
-    // Always i should be smaller than j
-    // That is cluster with higher index gets merged to the cluster with lower index
-    if (i > j) {
-      int temp = i;
-      i = j;
-      j = temp;
-    } 
+    // Always i should be smaller than j - cluster with higher index gets merged to the cluster with lower index
+    if (i > j) swap(i, j);
 
     // printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
 
     dendrogram[index(iteration, 0, 3)] = (float) i;
     dendrogram[index(iteration, 1, 3)] = (float) j;
     dendrogram[index(iteration, 2, 3)] = min_value;
-    // ******************** END: Merge right cluster to left ********************
 
-    // O(1)
-    // Update left cluster's distance with all others
+    // O(1) - Update left cluster's distance with all others
     update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, i, j, n);
     cudaDeviceSynchronize();
-    // if (PRINT_LOG) {
-    //   printf("Dist Matrix-2:\n");
-    //   cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-    //   print_float_matrix(dist_matrix, n, n);
-    // }
 
-    // Remove right clusters from further consideration
+    // O(1) - Remove right clusters from further consideration
     remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, j, n);
     cudaDeviceSynchronize();
-    // if (PRINT_LOG) {
-    //   printf("Dist Matrix-3:\n");
-    //   cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-    //   print_float_matrix(dist_matrix, n, n);
-    // }
   }
 
-  // cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-  // if (PRINT_LOG) {
-  //   printf("Dist Matrix:\n");
-  //   print_float_matrix(dist_matrix, n, n);
-  // }
-
-  end = clock();
-  time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-  if (PRINT_ANALYSIS)
-    printf("Time taken for merge cluster %lf\n", time_taken);
-    
-  //  if (PRINT_LOG){
-  // //  printf("Cluster IDs:\n");
-  // //   print_int_matrix(result, 1, n);
-  //    printf("Dendrogram:\n");
-  //    print_float_matrix(dendrogram, n-1, 3);
-  //  }
-
-  // free(dist_matrix);
   cudaFree(dataset_d);
   cudaFree(dist_matrix_d);
 }
