@@ -289,7 +289,6 @@ void merge_clusters(int * result, int data_point_i, int data_point_j, int dim) {
 void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * dendrogram){
   double time_taken;
   clock_t start, end;
-  for (int i = 0; i < n; i++) result[i] = i;
 
   // FIXME: Remove this in final cleanup, here only for testing
   float* dist_matrix = (float *)calloc(n*n, sizeof(float));
