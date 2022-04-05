@@ -345,9 +345,9 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
   cudaDeviceSynchronize();
-  cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
   if (PRINT_LOG) {
     printf("Dist Matrix:\n");
+    cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
     print_float_matrix(dist_matrix, n, n);
   }
   end = clock();
@@ -366,7 +366,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 
   // O(n)
   for (int iteration=0; iteration < n - 1; iteration++) {
-    float entry[3]; 
 
     // O(log n)
     printf("BEFORE\n");
@@ -374,8 +373,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     printf("AFTER\n");
     cudaDeviceSynchronize();
     printf("AFTER-2\n");
-    // Merge right cluster to left
-
+    // ******************** START: Merge right cluster to left ********************
     // Move min value index to host memory
     int* min_val_idx;
     if(!(min_val_idx = (int *) malloc(sizeof(int)))) {
@@ -386,18 +384,19 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 
     // Move min value to host memory
     float* min_val;
-    if(!(min_val = (int *) malloc(sizeof(float)))) {
+    if(!(min_val = (float *) malloc(sizeof(float)))) {
       printf("Error allocating min_val\n");
       exit(1);
     }
     cudaMemcpy(min_val, (dist_matrix_d+*min_val_idx), sizeof(float), cudaMemcpyDeviceToHost);
 
-    printf("AFTER-22\n");
-
-
+    float min_value = *min_val;
     int i = *min_val_idx/n;
     int j = *min_val_idx%n;
-    printf("AFTER-3\n");
+
+    // Deallocated memories used to move results from device to host
+    free(min_val);
+    free(min_val_idx);
 
     // Always i should be smaller than j
     // That is cluster with higher index gets merged to the cluster with lower index
@@ -407,29 +406,30 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       j = temp;
     } 
 
-    printf("--> i %d, j %d, min_val %.2f, min_val_idx: %d\n", i, j, *min_val, *min_val_idx);
-    free(min_val_idx);
+    printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
 
-    entry[0] = i;
-    entry[1] = j;
-    entry[2] = min_val;
-    dendrogram[index(iteration, 0, 3)] = entry[0];
-    dendrogram[index(iteration, 1, 3)] = entry[1];
-    dendrogram[index(iteration, 2, 3)] = entry[2];
+    dendrogram[index(iteration, 0, 3)] = (float) i;
+    dendrogram[index(iteration, 1, 3)] = (float) j;
+    dendrogram[index(iteration, 2, 3)] = min_value;
+    // ******************** END: Merge right cluster to left ********************
 
     // O(1)
     // Update left cluster's distance with all others
-    update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, (int)entry[0], (int)entry[1], n);
+    update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, i, j, n);
     cudaDeviceSynchronize();
+    if (PRINT_LOG) {
+      printf("Dist Matrix-2:\n");
+      cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+      print_float_matrix(dist_matrix, n, n);
+    }
 
     // Remove right clusters from further consideration
-    remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, (int)entry[1], n);
+    remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, j, n);
     cudaDeviceSynchronize();
-  
-    if (PRINT_LOG){
-      printf("Iteartion #%d\n", iteration);
-      printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
-      // print_int_matrix(result, 1, n);
+    if (PRINT_LOG) {
+      printf("Dist Matrix-3:\n");
+      cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+      print_float_matrix(dist_matrix, n, n);
     }
   }
 
