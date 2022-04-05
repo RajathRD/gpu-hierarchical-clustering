@@ -48,7 +48,7 @@ void print_float_matrix(float * a, int n, int m){
       if ((fabs(FLT_MAX - curr)) < 0.000001) {
         printf("FLT_MAX ");
       } else {
-        printf("%f ", a[index(i, j, m)]);
+        printf("%.2f ", a[index(i, j, m)]);
       }
     }
     printf("\n");
