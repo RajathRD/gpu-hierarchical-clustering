@@ -533,5 +533,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
     - TODO: Add tester in a separate file with sample tests for GPU version
 
   Notes:
-    - There are 3 cuda memory (cudaMalloc with int and float types) allocations so, total memory needed is 4*(2*n*n + n*m)
+    - There are 3 cuda memory (cudaMalloc with int and float types) allocations so, total memory needed is 4*(2*n*n + n*m). 
+      Sine single device memory is 60GB, n should be tested as much as 12000 before hitting memory limits. 
+
 */
