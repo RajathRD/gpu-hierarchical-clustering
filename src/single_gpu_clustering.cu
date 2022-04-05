@@ -518,8 +518,8 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
         right_val = (stride == n*n/2) ? dist_matrix_d[right_idx] : dist_matrix_d[indices[right_idx]];
       }
 
-      // printf("find_pairwise_min_cuda - left_idx %d, indices[left_idx] %d, left_val %.2f and right_idx %d, indices[right_idx] %d, right_val %.2f | index %d, stride %d, n %d\n", 
-      // left_idx, indices[left_idx], left_val, right_idx, indices[right_idx], right_val, index, stride, n);
+      printf("find_pairwise_min_cuda - left_idx %d, indices[left_idx] %d, left_val %.2f and right_idx %d, indices[right_idx] %d, right_val %.2f | index %d, stride %d, n %d\n", 
+      left_idx, indices[left_idx], left_val, right_idx, indices[right_idx], right_val, index, stride, n);
 
       if (left_val <= right_val) {
         indices[left_idx] = (stride == n*n/2) ? left_idx : indices[left_idx];
@@ -527,8 +527,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
         indices[left_idx] = (stride == n*n/2) ? right_idx : indices[right_idx];
       }
 
-      //printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, left_val %.2f\n", 
-      //left_idx, indices[left_idx], left_val);
+      printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, left_val %.2f\n", left_idx, indices[left_idx], left_val);
     }
   }
   //printf("find_pairwise_min_cuda (END) - indices[0]: %d\n", indices[0]);
@@ -566,5 +565,11 @@ __global__ void min_reduction(float *arr, float* block_mins, int n)
 
  4. Testing/Validation - till GPU runs out of memory
  5. Improvements
+
+ Notes:
+  issues so far:
+  ./single_gpu_clustering 7 1 1
+  ./single_gpu_clustering 10 1 1
+  ./single_gpu_clustering 7 2 1
 
 */
