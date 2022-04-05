@@ -398,7 +398,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       j = temp;
     } 
 
-    printf("--> i %d, j %d, min_val %d, min_val_idx: %d\n", i, j, min_val, *min_val_idx);
+    printf("--> i %d, j %d, min_val %d, min_val_idx: %d\n", i, j, min_val, min_val_idx[0]);
     free(min_val_idx);
 
     entry[0] = i;
