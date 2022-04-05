@@ -35,7 +35,7 @@ int get_parent(int, int *);
 
 // Kernel functions
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int * indices, float* values);
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices, float* values);
 __global__ void min_reduction(float *, float*, int);
 __global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n);
 __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int right_cluster, int n);
@@ -370,7 +370,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 
     // O(log n)
     printf("BEFORE\n");
-    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, entry, indices, values);
+    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, indices, values);
     printf("AFTER\n");
     cudaDeviceSynchronize();
     printf("AFTER-2\n");
@@ -386,8 +386,8 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 
 
     int min_val = 333;
-    int i = *min_val_idx/n;
-    int j = *min_val_idx%n;
+    int i = min_val_idx[0]/n;
+    int j = min_val_idx[0]%n;
     printf("AFTER-3\n");
 
     // Always i should be smaller than j
@@ -508,11 +508,7 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
   }
 }
 
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entry, int * indices, float* values) {
-  entry[0] = 0;
-  entry[1] = 0;
-  entry[2] = FLT_MAX;
-
+__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices, float* values) {
   int index = threadIdx.x + blockIdx.x * blockDim.x;
 
   // indices and values needs to be shared
