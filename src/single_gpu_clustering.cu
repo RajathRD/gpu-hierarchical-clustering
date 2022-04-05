@@ -164,8 +164,6 @@ int main(int argc, char * argv[])
   printf("Time taken for %s is %lf\n", type_of_device == 0? "CPU" : "GPU", time_taken);
 
   if (PRINT_LOG){
-    printf("Cluster IDs:\n");
-    print_int_matrix(result, 1, n);
     printf("Dendrogram:\n");
     print_float_matrix(dendrogram, n-1, 3);
   }
@@ -206,17 +204,15 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-  if (PRINT_ANALYSIS)
-    printf("Time taken for distance computation: %lf\n", time_taken);
+  // if (PRINT_ANALYSIS)
+  //   printf("Time taken for distance computation: %lf\n", time_taken);
   
   start = clock();
   for (int iteration=0; iteration < n - 1; iteration++) {
-    
     float entry[3]; 
+
     // O(I*n*n) -> GPU
-    
     find_pairwise_min(dist_matrix, n, entry, result);
-    
     
     dendrogram[index(iteration, 0, 3)] = entry[0];
     dendrogram[index(iteration, 1, 3)] = entry[1];
@@ -225,12 +221,11 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
     
     merge_clusters(result, (int)entry[0], (int)entry[1], n);
     
-    
-    if (PRINT_LOG){
-      printf("Iteartion #%d\n", iteration);
-      printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
-      print_int_matrix(result, 1, n);
-    }
+    // if (PRINT_LOG){
+    //   printf("Iteartion #%d\n", iteration);
+    //   printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
+    //   print_int_matrix(result, 1, n);
+    // }
     
   }
 
@@ -505,7 +500,8 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
   // indices and values needs to be shared
   // extern __shared__ int indices[];
   // extern __shared__ float values[];
-  for (int stride = n*n/2; true; stride /= 2) {
+  int stride = n*n/2;
+  while (true) {
     __syncthreads();
     if (index <= stride) {
       int left_idx = index;
@@ -518,7 +514,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
         right_val = (stride == n*n/2) ? dist_matrix_d[right_idx] : dist_matrix_d[indices[right_idx]];
       }
 
-      printf("find_pairwise_min_cuda - left_idx %d, indices[left_idx] %d, left_val %.2f and right_idx %d, indices[right_idx] %d, right_val %.2f | index %d, stride %d, n %d\n", 
+      // printf("find_pairwise_min_cuda - left_idx %d, indices[left_idx] %d, left_val %.2f and right_idx %d, indices[right_idx] %d, right_val %.2f | index %d, stride %d, n %d\n", 
       left_idx, indices[left_idx], left_val, right_idx, indices[right_idx], right_val, index, stride, n);
 
       if (left_val <= right_val) {
@@ -527,10 +523,12 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
         indices[left_idx] = (stride == n*n/2) ? right_idx : indices[right_idx];
       }
 
-      printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, dist_matrix_d[indices[left_idx]] %.2f\n", left_idx, indices[left_idx], dist_matrix_d[indices[left_idx]]);
+      // printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, dist_matrix_d[indices[left_idx]] %.2f\n", left_idx, indices[left_idx], dist_matrix_d[indices[left_idx]]);
     }
 
+    // Do last check when there are just 2 elements in the array (when stride is 0)
     if (stride == 0) break;
+    stride /= 2;
   }
 
   
