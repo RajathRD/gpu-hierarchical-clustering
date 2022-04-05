@@ -400,7 +400,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       i = temp;
     }
 
-    // printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
+    printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
 
     dendrogram[index(iteration, 0, 3)] = (float) i;
     dendrogram[index(iteration, 1, 3)] = (float) j;
