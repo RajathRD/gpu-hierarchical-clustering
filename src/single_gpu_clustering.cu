@@ -467,6 +467,9 @@ __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int righ
 
   int i = index/n;
   int j = index%n;
+  
+  if (i == j) return;
+
   if (i == left_cluster) {
     float new_min = min(dist_matrix_d[index(i, j, n)], dist_matrix_d[index(right_cluster, j, n)]);
     dist_matrix_d[index(i, j, n)] = new_min;
