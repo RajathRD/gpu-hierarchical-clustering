@@ -15,7 +15,7 @@
 #define index(i, j, N)  ((i)*(N)) + (j)
 
 /* Config params */
-#define PRINT_LOG 1
+#define PRINT_LOG 0
 #define PRINT_ANALYSIS 1
 /* Define constants */
 #define RANGE 100
@@ -313,16 +313,16 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   for (int i = 0; i < n; i++) result[i] = i;
 
   // FIXME: Why we have dist_matrix in main memory? do we need it?
-  float* dist_matrix = (float *)calloc(n*n, sizeof(float));
-  if( !dist_matrix ) {
-   fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
-   exit(1);
-  }
+  // float* dist_matrix = (float *)calloc(n*n, sizeof(float));
+  // if( !dist_matrix ) {
+  //  fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
+  //  exit(1);
+  // }
 
   float * dist_matrix_d;
   cudaMalloc((void**) &dist_matrix_d, n*n*sizeof(float));
   if (!dist_matrix_d) {
-    fprintf(stderr, " Cannot allocate cuda dist_matrix %u array\n", n*n);
+    fprintf(stderr, " Cannot allocate cuda dist_matrix_d %u array\n", n*n);
     exit(1);
   }
 
@@ -333,7 +333,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     exit(1);
   }
 
-  cudaMemcpy(dist_matrix_d, dist_matrix, n*n*sizeof(float), cudaMemcpyHostToDevice);
+  // cudaMemcpy(dist_matrix_d, dist_matrix, n*n*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(dataset_d, dataset, n*m*sizeof(float), cudaMemcpyHostToDevice);
 
   // Maximum number of threads per block in cuda1.cims.nyu.edu 
@@ -345,11 +345,11 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
   cudaDeviceSynchronize();
-  if (PRINT_LOG) {
-    printf("Dist Matrix:\n");
-    cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-    print_float_matrix(dist_matrix, n, n);
-  }
+  // if (PRINT_LOG) {
+  //   printf("Dist Matrix:\n");
+  //   cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+  //   print_float_matrix(dist_matrix, n, n);
+  // }
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
@@ -368,11 +368,8 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   for (int iteration=0; iteration < n - 1; iteration++) {
 
     // O(log n)
-    printf("BEFORE\n");
     find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, indices, values);
-    printf("AFTER\n");
     cudaDeviceSynchronize();
-    printf("AFTER-2\n");
     // ******************** START: Merge right cluster to left ********************
     // Move min value index to host memory
     int* min_val_idx;
@@ -406,7 +403,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       j = temp;
     } 
 
-    printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
+    // printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
 
     dendrogram[index(iteration, 0, 3)] = (float) i;
     dendrogram[index(iteration, 1, 3)] = (float) j;
@@ -417,41 +414,41 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     // Update left cluster's distance with all others
     update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, i, j, n);
     cudaDeviceSynchronize();
-    if (PRINT_LOG) {
-      printf("Dist Matrix-2:\n");
-      cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-      print_float_matrix(dist_matrix, n, n);
-    }
+    // if (PRINT_LOG) {
+    //   printf("Dist Matrix-2:\n");
+    //   cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+    //   print_float_matrix(dist_matrix, n, n);
+    // }
 
     // Remove right clusters from further consideration
     remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, j, n);
     cudaDeviceSynchronize();
-    if (PRINT_LOG) {
-      printf("Dist Matrix-3:\n");
-      cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-      print_float_matrix(dist_matrix, n, n);
-    }
+    // if (PRINT_LOG) {
+    //   printf("Dist Matrix-3:\n");
+    //   cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+    //   print_float_matrix(dist_matrix, n, n);
+    // }
   }
 
-  cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-  if (PRINT_LOG) {
-    printf("Dist Matrix:\n");
-    print_float_matrix(dist_matrix, n, n);
-  }
+  // cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+  // if (PRINT_LOG) {
+  //   printf("Dist Matrix:\n");
+  //   print_float_matrix(dist_matrix, n, n);
+  // }
 
   end = clock();
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   if (PRINT_ANALYSIS)
     printf("Time taken for merge cluster %lf\n", time_taken);
     
-   if (PRINT_LOG){
-  //  printf("Cluster IDs:\n");
-  //   print_int_matrix(result, 1, n);
-     printf("Dendrogram:\n");
-     print_float_matrix(dendrogram, n-1, 3);
-   }
+  //  if (PRINT_LOG){
+  // //  printf("Cluster IDs:\n");
+  // //   print_int_matrix(result, 1, n);
+  //    printf("Dendrogram:\n");
+  //    print_float_matrix(dendrogram, n-1, 3);
+  //  }
 
-  free(dist_matrix);
+  // free(dist_matrix);
   cudaFree(dataset_d);
   cudaFree(dist_matrix_d);
 }
@@ -473,11 +470,11 @@ __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int righ
   if (i == left_cluster) {
     float new_min = min(dist_matrix_d[index(i, j, n)], dist_matrix_d[index(right_cluster, j, n)]);
     dist_matrix_d[index(i, j, n)] = new_min;
-    printf("update_cluster - i == left_cluster | i: %d, j: %d, n: %d, new_min: %.2f\n", i, j, n, new_min);
+    // printf("update_cluster - i == left_cluster | i: %d, j: %d, n: %d, new_min: %.2f\n", i, j, n, new_min);
   } else if (j == left_cluster) {
     float new_min = min(dist_matrix_d[index(i, j, n)], dist_matrix_d[index(i, right_cluster, n)]);
     dist_matrix_d[index(i, j, n)] = new_min;
-    printf("update_cluster - j == left_cluster | i: %d, j: %d, n: %d, new_min: %.2f\n", i, j, n, new_min);
+    // printf("update_cluster - j == left_cluster | i: %d, j: %d, n: %d, new_min: %.2f\n", i, j, n, new_min);
   }
 }
 
@@ -492,10 +489,10 @@ __global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n) 
 
   int i = index/n;
   int j = index%n;
-    printf("remove_cluster | i: %d, j: %d, index: %d, dist_matrix_d[index]: %.2f, right_cluster: %d\n", i, j, index, dist_matrix_d[index], right_cluster);
+    // printf("remove_cluster | i: %d, j: %d, index: %d, dist_matrix_d[index]: %.2f, right_cluster: %d\n", i, j, index, dist_matrix_d[index], right_cluster);
   if (i == right_cluster || j == right_cluster) {
     dist_matrix_d[index] = FLT_MAX;
-    printf("remove_cluster - i == right_cluster || j == right_cluster | i: %d, j: %d, index: %d, dist_matrix_d[index]: %.2f, right_cluster: %d\n", i, j, index, dist_matrix_d[index], right_cluster);
+    // printf("remove_cluster - i == right_cluster || j == right_cluster | i: %d, j: %d, index: %d, dist_matrix_d[index]: %.2f, right_cluster: %d\n", i, j, index, dist_matrix_d[index], right_cluster);
   }
 }
 
@@ -539,8 +536,8 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
         right_val = (stride == n*n/2) ? dist_matrix_d[right_idx] : dist_matrix_d[indices[right_idx]];
       }
 
-      printf("find_pairwise_min_cuda - left_idx %d, indices[left_idx] %d, left_val %.2f and right_idx %d, indices[right_idx] %d, right_val %.2f | index %d, stride %d, n %d\n", 
-      left_idx, indices[left_idx], left_val, right_idx, indices[right_idx], right_val, index, stride, n);
+      // printf("find_pairwise_min_cuda - left_idx %d, indices[left_idx] %d, left_val %.2f and right_idx %d, indices[right_idx] %d, right_val %.2f | index %d, stride %d, n %d\n", 
+      // left_idx, indices[left_idx], left_val, right_idx, indices[right_idx], right_val, index, stride, n);
 
       if (left_val <= right_val) {
         indices[left_idx] = (stride == n*n/2) ? left_idx : indices[left_idx];
