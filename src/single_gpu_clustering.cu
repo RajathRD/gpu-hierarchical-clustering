@@ -23,8 +23,8 @@
 /**************************** Definitions *************************************/
 
 // Function declarations
-void  seq_clustering(float *, unsigned int, unsigned int, int *, float *);
-void  gpu_clustering(float *, unsigned int, unsigned int, int*, float *);
+void seq_clustering(float *, unsigned int, unsigned int, float *);
+void gpu_clustering(float *, unsigned int, unsigned int, float *);
 void calculate_pairwise_dists(float *, int, int, float *);
 void find_pairwise_min(float *, int, float *, int *);
 void merge_clusters(int *, int, int, int);
@@ -36,7 +36,6 @@ int get_parent(int, int *);
 // Kernel functions
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
 __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices, float* values);
-__global__ void min_reduction(float *, float*, int);
 __global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n);
 __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int right_cluster, int n);
 
@@ -130,13 +129,12 @@ int main(int argc, char * argv[])
   }*/
 
   //Load data
-  float * dataset;
-  dataset = (float *)calloc(n*m, sizeof(float));
-  if( !dataset )
-  {
+  float * dataset = (float *)calloc(n*m, sizeof(float));
+  if(!dataset) {
    fprintf(stderr, " Cannot allocate the %u x %u array\n", n, m);
    exit(1);
   }
+
   load_data(dataset, n, m);
   //load_test_data(dataset);
   printf("Data loaded!\n");
@@ -144,45 +142,39 @@ int main(int argc, char * argv[])
   type_of_device = atoi(argv[3]);
 
   float dendrogram[(n-1)*3];
-  int * result;
-  result = (int *)calloc(n, sizeof(int));
   if( type_of_device == 0 ) { 
     // The CPU sequential version 
     start = clock();
-    seq_clustering(dataset, n, m, result, dendrogram);    
+    seq_clustering(dataset, n, m, dendrogram);    
     end = clock();
   } else {
     // The GPU version
      start = clock();
-     gpu_clustering(dataset, n, m, result, dendrogram);
+     gpu_clustering(dataset, n, m, dendrogram);
      end = clock();    
   }
-  
   
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   
   printf("Time taken for %s is %lf\n", type_of_device == 0? "CPU" : "GPU", time_taken);
 
-  if (PRINT_LOG){
-    printf("Dendrogram:\n");
-    print_float_matrix(dendrogram, n-1, 3);
-  }
-
+  printf("Dendrogram:\n");
+  print_float_matrix(dendrogram, n-1, 3);
+  
   free(dataset);
-  free(result);
 
   return 0;
-
 }
 
 
 /*****************  The CPU sequential version **************/
-void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* result, float * dendrogram)
+void  seq_clustering(float * dataset, unsigned int n, unsigned int m, float * dendrogram)
 {
   // to measure time taken by a specific part of the code 
   double time_taken;
   clock_t start, end;
   
+  int * result = (int *)calloc(n, sizeof(int));
   if( !result ) {
    fprintf(stderr, " Cannot allocate result %u array\n", n);
    exit(1);
@@ -217,16 +209,9 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
     dendrogram[index(iteration, 0, 3)] = entry[0];
     dendrogram[index(iteration, 1, 3)] = entry[1];
     dendrogram[index(iteration, 2, 3)] = entry[2];
+
     // O(I*n) -> amortized O(I)
-    
     merge_clusters(result, (int)entry[0], (int)entry[1], n);
-    
-    // if (PRINT_LOG){
-    //   printf("Iteartion #%d\n", iteration);
-    //   printf("Min Indices: %d, %d\n", (int)entry[0], (int)entry[1]);
-    //   print_int_matrix(result, 1, n);
-    // }
-    
   }
 
   end = clock();
@@ -237,6 +222,7 @@ void  seq_clustering(float * dataset, unsigned int n, unsigned int m, int* resul
   for (int i=0; i<n; i++) result[i] = get_parent(i, result);
 
   free(dist_matrix);
+  free(result);
 }
 
 void calculate_pairwise_dists(float * dataset, int n, int m, float * dist_matrix) {
@@ -263,12 +249,10 @@ float calculate_dist(float * dataset, int i, int j, int dim) {
   return dist;
 }
 
-
 int get_parent(int curr_parent, int* parents) {
   if (parents[curr_parent] == curr_parent) return curr_parent;
   parents[curr_parent] = get_parent(parents[curr_parent], parents);
   return parents[curr_parent];
-  // return get_parent(parents[curr_parent], parents);
 }
 
 
@@ -279,7 +263,6 @@ void find_pairwise_min(float * dist_matrix, int n, float* entry, int* parents) {
   for (int i = 0; i < n; i++) {
     for (int j = i+1; j < n; j++) {
       if (get_parent(i, parents) != get_parent(j, parents)) {
-      // if (parents[i] != parents[j]) {
         float curr_dist = dist_matrix[index(i, j, n)];
         if (curr_dist < entry[2]) {
           entry[0] = i;
@@ -297,17 +280,13 @@ void merge_clusters(int * result, int data_point_i, int data_point_j, int dim) {
     printf("merge_clusters out of bounds");
     return;
   } 
-  // int cluster_j = result[data_point_j];
-  // for(int i=0; i<dim; i++)
-  //   if(result[i] == cluster_j)
-  //     result[i] = result[data_point_i];
   int parent_i = get_parent(data_point_i, result);
   result[get_parent(data_point_j, result)] = parent_i;
 } 
 
 /***************** The GPU version *********************/
 /* This function can call one or more kernels if you want ********************/
-void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * result, float * dendrogram){
+void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * dendrogram){
   double time_taken;
   clock_t start, end;
   for (int i = 0; i < n; i++) result[i] = i;
@@ -531,33 +510,8 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
     stride /= 2;
   }
 
-  
   //printf("find_pairwise_min_cuda (END) - indices[0]: %d\n", indices[0]);
 }
-
-// This is a multi block parralell reduction
-// reduce in block_mins after kernel finishes
-__global__ void min_reduction(float *arr, float* block_mins, int n)
-{
-  int index = threadIdx.x + blockIdx.x * blockDim.x;
-  int next = 1, left, right;
-  n /= 2;
-  while (n > 0){
-    if (index < n){
-      left = index * next * 2;
-      right = left + next;
-      if (arr[left] < arr[right]){
-        arr[left] = arr[right];
-      }
-    }
-    next *= 2;
-    n /= 2;
-  }
-  __syncthreads();
-  if (threadIdx.x == 0)
-    block_mins[blockIdx.x] = arr[0];
-}
-
 
 
 /*
