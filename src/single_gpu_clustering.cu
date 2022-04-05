@@ -43,8 +43,14 @@ __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int righ
 /*************************** Helper Functions **************************************/
 void print_float_matrix(float * a, int n, int m){
   for(int i=0; i<n; i++){
-    for(int j=0; j<m; j++)
-      printf("%f ", a[index(i, j, m)]);
+    for(int j=0; j<m; j++) {
+      float curr = a[index(i, j, m)];
+      if ((fabs(FLT_MAX - curr)) < 0.000001) {
+        printf("FLT_MAX ");
+      } else {
+        printf("%f ", a[index(i, j, m)]);
+      }
+    }
     printf("\n");
   }
 }
