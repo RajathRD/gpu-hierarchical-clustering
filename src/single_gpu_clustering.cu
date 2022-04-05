@@ -398,7 +398,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       j = temp;
     } 
 
-    printf("--> i %d, j %d, min_val %.2f, min_val_idx: %d\n", i, j, min_val, *min_val_idx);
+    printf("--> i %d, j %d, min_val %d, min_val_idx: %d\n", i, j, min_val, *min_val_idx);
     free(min_val_idx);
 
     entry[0] = i;
@@ -539,6 +539,9 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
       } else {
         indices[left_idx] = (stride == n*n/2) ? right_idx : indices[right_idx];
       }
+
+      printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, left_val %.2f\n", 
+      left_idx, indices[left_idx], left_val);
     }
   }
 }
