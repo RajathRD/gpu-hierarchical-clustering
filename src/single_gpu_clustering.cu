@@ -15,7 +15,7 @@
 #define index(i, j, N)  ((i)*(N)) + (j)
 
 /* Config params */
-#define PRINT_LOG 0
+#define PRINT_LOG 1
 #define PRINT_ANALYSIS 1
 /* Define constants */
 #define RANGE 100
@@ -342,11 +342,11 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
   cudaDeviceSynchronize();
-  // if (PRINT_LOG) {
-  //   printf("Dist Matrix:\n");
-  //   cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-  //   print_float_matrix(dist_matrix, n, n);
-  // }
+  if (PRINT_LOG) {
+    printf("Dist Matrix:\n");
+    cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+    print_float_matrix(dist_matrix, n, n);
+  }
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
@@ -407,10 +407,20 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     // O(1) - Update left cluster's distance with all others
     update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, i, j, n);
     cudaDeviceSynchronize();
+    if (PRINT_LOG) {
+      printf("Update left cluster's distance with all others: Dist Matrix:\n");
+      cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+      print_float_matrix(dist_matrix, n, n);
+    }
 
     // O(1) - Remove right clusters from further consideration
     remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, j, n);
     cudaDeviceSynchronize();
+    if (PRINT_LOG) {
+      printf("Remove right clusters from further consideration: Dist Matrix:\n");
+      cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
+      print_float_matrix(dist_matrix, n, n);
+    }
   }
 
   cudaFree(dataset_d);
