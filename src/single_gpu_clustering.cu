@@ -463,7 +463,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
 __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int right_cluster, int n) {
 
   int index = threadIdx.x + blockIdx.x * blockDim.x;
-  if (index >= n) return;
+  if (index >= n*n) return;
 
   int i = index/n;
   int j = index%n;
@@ -488,7 +488,7 @@ __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int righ
 __global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n) {
 
   int index = threadIdx.x + blockIdx.x * blockDim.x;
-  if (index >= n) return;
+  if (index >= n*n) return;
 
   int i = index/n;
   int j = index%n;
