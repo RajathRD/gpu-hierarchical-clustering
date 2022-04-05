@@ -392,7 +392,11 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     free(min_val_idx);
 
     // Always i should be smaller than j - cluster with higher index gets merged to the cluster with lower index
-    if (i > j) swap(i, j);
+    if (i > j) {
+      int temp = j;
+      j = i;
+      i = temp;
+    }
 
     // printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
 
