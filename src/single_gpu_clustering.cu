@@ -389,6 +389,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     int i = *min_val_idx/n;
     int j = *min_val_idx%n;
     printf("AFTER-3\n");
+    free(min_val_idx);
 
     // Always i should be smaller than j
     // That is cluster with higher index gets merged to the cluster with lower index
@@ -442,7 +443,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
    }
 
   free(dist_matrix);
-  free(min_val_idx);
   cudaFree(dataset_d);
   cudaFree(dist_matrix_d);
 }
