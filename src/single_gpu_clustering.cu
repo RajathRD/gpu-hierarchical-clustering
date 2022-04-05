@@ -312,11 +312,11 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
   for (int i = 0; i < n; i++) result[i] = i;
 
   // FIXME: Remove this in final cleanup, here only for testing
-  // float* dist_matrix = (float *)calloc(n*n, sizeof(float));
-  // if( !dist_matrix ) {
-  //  fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
-  //  exit(1);
-  // }
+  float* dist_matrix = (float *)calloc(n*n, sizeof(float));
+  if( !dist_matrix ) {
+   fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
+   exit(1);
+  }
 
   float * dist_matrix_d;
   cudaMalloc((void**) &dist_matrix_d, n*n*sizeof(float));
