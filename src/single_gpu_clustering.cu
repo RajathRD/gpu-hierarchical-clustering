@@ -528,8 +528,9 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
       }
 
       printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, dist_matrix_d[indices[left_idx]] %.2f\n", left_idx, indices[left_idx], dist_matrix_d[indices[left_idx]]);
-      if (stride == 0) break;
     }
+
+    if (stride == 0) break;
   }
 
   
