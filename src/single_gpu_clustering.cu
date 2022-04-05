@@ -544,6 +544,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, float* entr
       left_idx, indices[left_idx], left_val);
     }
   }
+  printf("find_pairwise_min_cuda (END) - indices[0]: %d\n", indices[0]);
 }
 
 // This is a multi block parralell reduction
