@@ -505,7 +505,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
   // indices and values needs to be shared
   // extern __shared__ int indices[];
   // extern __shared__ float values[];
-  for (int stride = n*n/2; stride > 0; stride /= 2) {
+  for (int stride = n*n/2; true; stride /= 2) {
     __syncthreads();
     if (index <= stride) {
       int left_idx = index;
@@ -528,6 +528,7 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
       }
 
       printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, dist_matrix_d[indices[left_idx]] %.2f\n", left_idx, indices[left_idx], dist_matrix_d[indices[left_idx]]);
+      if (stride == 0) break;
     }
   }
 
