@@ -375,17 +375,26 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     cudaDeviceSynchronize();
     printf("AFTER-2\n");
     // Merge right cluster to left
+
+    // Move min value index to host memory
     int* min_val_idx;
     if(!(min_val_idx = (int *) malloc(sizeof(int)))) {
       printf("Error allocating min_val_idx\n");
       exit(1);
     }
-
     cudaMemcpy(min_val_idx, indices, sizeof(int), cudaMemcpyDeviceToHost);
+
+    // Move min value to host memory
+    float* min_val;
+    if(!(min_val = (int *) malloc(sizeof(float)))) {
+      printf("Error allocating min_val\n");
+      exit(1);
+    }
+    cudaMemcpy(min_val, (dist_matrix_d+*min_val_idx), sizeof(float), cudaMemcpyDeviceToHost);
+
     printf("AFTER-22\n");
 
 
-    int min_val = 333;
     int i = *min_val_idx/n;
     int j = *min_val_idx%n;
     printf("AFTER-3\n");
@@ -398,7 +407,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       j = temp;
     } 
 
-    printf("--> i %d, j %d, min_val %d, min_val_idx: %d\n", i, j, min_val, *min_val_idx);
+    printf("--> i %d, j %d, min_val %.2f, min_val_idx: %d\n", i, j, *min_val, *min_val_idx);
     free(min_val_idx);
 
     entry[0] = i;
