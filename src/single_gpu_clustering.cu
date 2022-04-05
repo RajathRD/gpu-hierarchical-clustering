@@ -1,6 +1,6 @@
 /* 
  *
- * Docs
+ * FIXME: Put docs here
  * 
  */
 
@@ -15,8 +15,9 @@
 #define index(i, j, N)  ((i)*(N)) + (j)
 
 /* Config params */
-#define PRINT_LOG 1
-#define PRINT_ANALYSIS 1
+#define PRINT_LOG 0
+#define PRINT_ANALYSIS 0
+
 /* Define constants */
 #define RANGE 100
 
@@ -285,7 +286,6 @@ void merge_clusters(int * result, int data_point_i, int data_point_j, int dim) {
 } 
 
 /***************** The GPU version *********************/
-/* This function can call one or more kernels if you want ********************/
 void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * dendrogram){
   double time_taken;
   clock_t start, end;
@@ -521,10 +521,13 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
  4. Testing/Validation - till GPU runs out of memory
  5. Improvements
 
- Notes:
-  issues so far:
-  ./single_gpu_clustering 7 1 1
-  ./single_gpu_clustering 10 1 1
-  ./single_gpu_clustering 7 2 1
+ Tasks:
+  - DONE: Fix issues for these:
+    ./single_gpu_clustering 7 1 1
+    ./single_gpu_clustering 10 1 1
+    ./single_gpu_clustering 7 2 1
+ 
+  - TODO: Update arg checks for 4 inputs as well as for tests
+  - TODO: Add sample tests for GPU version 
 
 */
