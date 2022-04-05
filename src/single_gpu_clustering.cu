@@ -376,18 +376,18 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
     printf("AFTER-2\n");
     // Merge right cluster to left
     int* min_val_idx;
-    if(!(min_val_idx = (int *) malloc(n*n*sizeof(int)))) {
+    if(!(min_val_idx = (int *) malloc(sizeof(int)))) {
       printf("Error allocating min_val_idx\n");
       exit(1);
     }
 
-    cudaMemcpy(min_val_idx, indices, n*n*sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(min_val_idx, indices, sizeof(int), cudaMemcpyDeviceToHost);
     printf("AFTER-22\n");
 
 
     int min_val = 333;
-    int i = min_val_idx[0]/n;
-    int j = min_val_idx[0]%n;
+    int i = *min_val_idx/n;
+    int j = *min_val_idx%n;
     printf("AFTER-3\n");
 
     // Always i should be smaller than j
@@ -398,7 +398,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, int * resul
       j = temp;
     } 
 
-    printf("--> i %d, j %d, min_val %d, min_val_idx: %d\n", i, j, min_val, min_val_idx[0]);
+    printf("--> i %d, j %d, min_val %d, min_val_idx: %d\n", i, j, min_val, *min_val_idx);
     free(min_val_idx);
 
     entry[0] = i;
@@ -536,11 +536,11 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
         indices[left_idx] = (stride == n*n/2) ? right_idx : indices[right_idx];
       }
 
-      printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, left_val %.2f\n", 
-      left_idx, indices[left_idx], left_val);
+      //printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, left_val %.2f\n", 
+      //left_idx, indices[left_idx], left_val);
     }
   }
-  printf("find_pairwise_min_cuda (END) - indices[0]: %d\n", indices[0]);
+  //printf("find_pairwise_min_cuda (END) - indices[0]: %d\n", indices[0]);
 }
 
 // This is a multi block parralell reduction
