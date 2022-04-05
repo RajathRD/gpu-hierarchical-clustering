@@ -304,6 +304,14 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
     exit(1);
   }
 
+  // Temp array used by kernel function to find element in a distance matrix
+  int * indices;
+  cudaMalloc((void**) &indices, n*n*sizeof(int));
+  if (!indices) {
+    fprintf(stderr, " Cannot allocate cuda indices %u array\n", n*n);
+    exit(1);
+  }
+
   float * dataset_d;
   cudaMalloc((void**) &dataset_d, n*m*sizeof(float));
   if (!dataset_d) {
@@ -333,10 +341,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
     printf("Time taken for distance computation: %lf\n", time_taken);
   
   start = clock();
-
-  // Needs to be in shared memory
-  int * indices;
-  cudaMalloc((void**) &indices, n*n*sizeof(int));
 
   // O(n)
   for (int iteration=0; iteration < n - 1; iteration++) {
@@ -403,6 +407,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   }
 
   cudaFree(dataset_d);
+  cudaFree(indices);
   cudaFree(dist_matrix_d);
 }
 
@@ -518,12 +523,15 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
  4. Testing/Validation - till GPU runs out of memory
  5. Improvements
 
- Tasks:
-  - DONE: Fix issues for these:
-    ./single_gpu_clustering 7 1 1
-    ./single_gpu_clustering 10 1 1
-    ./single_gpu_clustering 7 2 1
- 
-  - TODO: Update arg checks for 4 inputs as well as for tests
-  - TODO: Add tester in a separate file with sample tests for GPU version
+  Tasks:
+    - DONE: Fix issues for these:
+      ./single_gpu_clustering 7 1 1
+      ./single_gpu_clustering 10 1 1
+      ./single_gpu_clustering 7 2 1
+  
+    - TODO: Update arg checks for 4 inputs as well as for tests
+    - TODO: Add tester in a separate file with sample tests for GPU version
+
+  Notes:
+    - There are 3 cuda memory (cudaMalloc with int and float types) allocations so, total memory needed is 4*(2*n*n + n*m)
 */
