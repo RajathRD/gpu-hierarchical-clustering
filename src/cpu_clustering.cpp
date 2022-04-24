@@ -342,6 +342,14 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
     }
     NBM[2*i1] = min_dist;
     NBM[(2*i1)+1] = min_idx;
+
+    // Also update the indices of any live clusters in NBM array that are still pointing to
+    // the old cluster
+    for(int i = 0; i < N; i++) {
+      if(I[i] == i && NBM[(2*i)+1] == i2) {
+        NBM[(2*i)+1] = i1;
+      }
+    }
   }
   
   free(C);
