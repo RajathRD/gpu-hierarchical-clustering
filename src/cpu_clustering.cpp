@@ -45,10 +45,6 @@ void gen_data(float * dataset, int n, int m) {
       dataset[index(i, j, m)] = ((float)rand()/(float)(RAND_MAX)) * RANGE - RANGE/2.0;
     } 
   }
-  if (PRINT_LOG){
-    printf("Dataset:\n");
-    print_matrix(dataset, n, m);
-  }
 }
 
 int main(int argc, char * argv[])
@@ -129,6 +125,10 @@ int main(int argc, char * argv[])
 
         printf("Test case %d\n", i);
         printf("Dataset size: %d x %d\n", N, M);
+        if (PRINT_LOG){
+          printf("Dataset:\n");
+          print_matrix(dataset, N, M);
+        }
 
         // Allocate result array
         result = (int *)calloc(2*(N-1), sizeof(int));
@@ -174,6 +174,10 @@ int main(int argc, char * argv[])
     }
     gen_data(dataset, N, M);
     printf("Data loaded!\n");
+    if (PRINT_LOG){
+      printf("Dataset:\n");
+      print_matrix(dataset, N, M);
+    }
 
     result = (int *)calloc(2*(N-1), sizeof(int));
     if( !result )
