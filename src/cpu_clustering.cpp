@@ -321,6 +321,7 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
             C[index(i, i1, N)] = min(C[index(i1, i, N)], C[index(i2, i, N)]);
             C[index(i1, i, N)] = C[index(i, i1, N)];
         }
+        // Assign old cluster the new cluster label
         if(I[i] == i2) {
             I[i] = i1;
         }
@@ -329,7 +330,7 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
     min_dist = FLT_MAX;
     min_idx = 0;
     for(int i = 0; i < N; i++) {
-        if(I[i] == i && i != i1) {
+        if(I[i] == i && i != i1 && C[index(i1, i, N)] < min_dist) {
             min_dist = C[index(i1, i, N)];
             min_idx = i;
         }
