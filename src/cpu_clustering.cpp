@@ -15,7 +15,7 @@ using namespace std;
 
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
-#define PRINT_LOG 1
+#define PRINT_LOG 0
 /* Define constants */
 #define RANGE 100
 
@@ -75,12 +75,12 @@ int main(int argc, char * argv[])
     vector<string> tests;
     // Read in the names of the test files
     string line;
-    ifstream myfile ("unittest/tests.txt");
-    if (myfile.is_open()) {
-        while ( getline (myfile,line) ) {
+    ifstream input_file ("unittest/tests.txt");
+    if (input_file.is_open()) {
+        while ( getline (input_file,line) ) {
             tests.push_back(line);
         }
-        myfile.close();
+        input_file.close();
     }
     else {
         cout << "Unable to open file";
@@ -129,7 +129,7 @@ int main(int argc, char * argv[])
             myfile.close();
         }
         else {
-            cout << "Unable to open file";
+            cout << "Unable to open input file\n";
         }
 
         printf("Test case %d\n", i+1);
@@ -154,18 +154,26 @@ int main(int argc, char * argv[])
         
         time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
 
-        //Print Result
+        //Write result to file
         string res = "";
         char buffer[11];
+        for (int i=0; i<N-1; i++){
+            sprintf(buffer, "(%d <- %d)\n", result[2*i], result[(2*i)+1]);
+            string merge (buffer);
+            res+=merge;
+        }
         if(PRINT_LOG) {
             printf("Merges made, in order:\n");
-            for (int i=0; i<N-1; i++){
-                sprintf(buffer, "(%d <- %d)\n", result[2*i], result[(2*i)+1]);
-                string merge (buffer);
-                res+=merge;
-            }
             cout << res << "\n";
         }
+        string output_path = "cpu_outputs/"+tests[i];
+        ofstream res_output (output_path, ios::out | ios::trunc);
+        if (res_output.is_open())
+        {
+          res_output << res;
+          res_output.close();
+        }
+        else cout << "Unable to open output file\n";
         
         printf("Time taken for CPU is %lf\n", time_taken);
         free(result);
