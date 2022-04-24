@@ -132,7 +132,7 @@ int main(int argc, char * argv[])
             cout << "Unable to open file";
         }
 
-        printf("Test case %d\n", i);
+        printf("Test case %d\n", i+1);
         printf("Dataset size: %d x %d\n", N, M);
         if (PRINT_LOG){
           printf("Dataset:\n");
@@ -155,11 +155,16 @@ int main(int argc, char * argv[])
         time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
 
         //Print Result
+        string res = "";
+        char buffer[11];
         if(PRINT_LOG) {
             printf("Merges made, in order:\n");
             for (int i=0; i<N-1; i++){
-                printf("(%d <- %d)\n", result[2*i], result[(2*i)+1]);
+                sprintf(buffer, "(%d <- %d)\n", result[2*i], result[(2*i)+1]);
+                string merge (buffer);
+                res+=merge;
             }
+            cout << res << "\n";
         }
         
         printf("Time taken for CPU is %lf\n", time_taken);
@@ -305,19 +310,10 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
             min_idx = i;
         }
     }
-    printf("I ARRAY:\n");
-    for(int i = 0; i < N; i++){
-      printf("%d ", I[i]);
-    }
-    printf("\n");
-    printf("NBM ARRAY:\n");
-    for(int i = 0; i < 2*N; i++){
-      printf("%f ", NBM[i]);
-    }
-    printf("\n");
     int i1 = min_idx;
     int i2 = I[(int)NBM[(2*i1)+1]];
-    printf("(%d <- %d)\n", i1, i2);
+
+    // Append to the result A array
     A[2*n] = i1;
     A[(2*n)+1] = i2;
     for(int i = 0; i < N; i++) {
@@ -340,6 +336,7 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
             min_idx = i;
         }
     }
+    // Update NBM array entry of the new cluster
     NBM[2*i1] = min_dist;
     NBM[(2*i1)+1] = min_idx;
 
