@@ -293,12 +293,6 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
     NBM[(2*n)+1] = min_idx;
   }
 
-  printf("NBM ARRAY:\n");
-  for(int i = 0; i < 2*N; i++){
-    printf("%f ", NBM[i]);
-  }
-  printf("\n");
-
   // Clustering
   for(int n = 0; n < N-1; n++) {
     float min_dist = FLT_MAX;
@@ -309,8 +303,14 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
             min_idx = i;
         }
     }
+    printf("NBM ARRAY:\n");
+    for(int i = 0; i < 2*N; i++){
+      printf("%f ", NBM[i]);
+    }
+    printf("\n");
     int i1 = min_idx;
     int i2 = I[(int)NBM[(2*i1)+1]];
+    printf("(%d <- %d)\n", i1, i2);
     A[2*n] = i1;
     A[(2*n)+1] = i2;
     for(int i = 0; i < N; i++) {
