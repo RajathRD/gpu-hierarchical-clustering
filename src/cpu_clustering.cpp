@@ -246,6 +246,11 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
   // Populate C matrix
   calculate_pairwise_dists(dataset, N, M, C);
 
+  if (PRINT_LOG){
+    printf("Distance matrix:\n");
+    print_matrix(C, N, N);
+  }
+
   // Allocate I array
   int * I = (int *)calloc(N, sizeof(int));
   if( !I )
