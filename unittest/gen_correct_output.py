@@ -7,7 +7,7 @@ tests = []
 with open('unittest/tests.txt', mode='r', encoding='utf8') as f:
     tests = f.read().split('\n')
 
-for test in tests:
+for test in [tests[1]]:
     print(test)
     N = 0
     M = 0
@@ -28,8 +28,6 @@ for test in tests:
     dists = pairwise_distances(dataset)
     print(dists)
 
-    print(cluster_labels)
-
     for iter in range(N-1):
         # Iterate over the remaining clusters and find the two clusters to be merged
         min_cluster1 = -1
@@ -40,16 +38,15 @@ for test in tests:
                 if cluster1 != cluster2 and (cluster1 != min_cluster2 and cluster2 != min_cluster1):
                     for v1 in cluster_labels[cluster1]:
                         for v2 in cluster_labels[cluster2]:
-                            if dists[v1][v2] <= min_dist:
+                            if dists[v1][v2] < min_dist:
                                 min_dist = dists[v1][v2]
                                 min_cluster1 = cluster1
                                 min_cluster2 = cluster2
-                                print("CLUSTER 1: {} CLUSTER 2: {}".format(min_cluster1, min_cluster2))     
 
         # Merge clusters by updating dists and cluster_labels
         cluster_labels[min_cluster1] = cluster_labels[min_cluster1] + cluster_labels[min_cluster2]
         cluster_labels.pop(min_cluster2)
-        #print("CLUSTER 1: {} CLUSTER 2: {}".format(min_cluster1, min_cluster2))     
+        print("CLUSTER 1: {} CLUSTER 2: {}".format(min_cluster1, min_cluster2))     
         print(cluster_labels)   
 
 #    with open('unittest/correct_outputs/'+test, mode='w+', encoding='utf8') as f:
