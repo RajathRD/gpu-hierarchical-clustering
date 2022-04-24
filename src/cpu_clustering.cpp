@@ -167,7 +167,7 @@ int main(int argc, char * argv[])
             cout << res << "\n";
         }
         string output_path = "cpu_outputs/"+tests[i];
-        ofstream res_output (output_path, ios::out | ios::trunc);
+        ofstream res_output (output_path, ios::trunc);
         if (res_output.is_open())
         {
           res_output << res;
