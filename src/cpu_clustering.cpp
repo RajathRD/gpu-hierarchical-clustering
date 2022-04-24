@@ -281,7 +281,7 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
 
   // Initialize NBM array
   for(int n = 0; n < N; n++) {
-    int min_dist = INT_MAX;
+    float min_dist = INT_MAX;
     int min_idx = 0;
     for(int i = 0; i < N; i++) {
         if(n != i && C[index(n, i, N)] < min_dist) {
