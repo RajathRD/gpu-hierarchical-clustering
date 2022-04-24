@@ -114,7 +114,7 @@ int main(int argc, char * argv[])
                 else {
                     int str_count = 0;
                     while( getline (iss, s, ' ') ) {
-                        dataset[index(file_count, str_count, M)] = atoi(s.c_str());
+                        dataset[index(file_count-1, str_count, M)] = atoi(s.c_str());
                         str_count++;
                     }
                 }
