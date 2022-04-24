@@ -3,6 +3,7 @@ python unittest/gen_correct_output.py
 # Run the CPU version
 ./src/cpu_clustering
 # Compare outputs
-while read p; do
-  echo "$p"
+while IFS="" read -r p || [ -n "$p" ]
+do
+  diff unittest/correct_outputs/$p unittest/cpu_outputs/$p
 done < unittest/tests.txt
