@@ -5,4 +5,4 @@ python unittest/gen_correct_output.py
 # Compare outputs
 while read p; do
   echo "$p"
-done < tests.txt
+done < unittest/tests.txt
