@@ -285,6 +285,7 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
     int min_idx = 0;
     for(int i = 0; i < N; i++) {
         if(n != i && C[index(n, i, N)] < min_dist) {
+            // Set each point's nearest cluster to the nearest point
             min_dist = C[index(n, i, N)];
             min_idx = i;
         }
@@ -297,6 +298,7 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
   for(int n = 0; n < N-1; n++) {
     float min_dist = FLT_MAX;
     int min_idx = 0;
+    // Find the two closest clusters
     for(int i = 0; i < N; i++) {
         if(I[i] == i && NBM[2*i] < min_dist) {
             min_dist = NBM[2*i];
@@ -314,8 +316,9 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
     A[2*n] = i1;
     A[(2*n)+1] = i2;
     for(int i = 0; i < N; i++) {
+      // Update distance matrix
         if(I[i] == i && i != i1 && i != i2) {
-            C[index(i, i1, N)] = max(C[index(i1, i, N)], C[index(i2, i, N)]);
+            C[index(i, i1, N)] = min(C[index(i1, i, N)], C[index(i2, i, N)]);
             C[index(i1, i, N)] = C[index(i, i1, N)];
         }
         if(I[i] == i2) {
