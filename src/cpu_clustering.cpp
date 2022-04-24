@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <limits.h>
 using namespace std;
 
 /* To index element (i,j) of a 2D array stored as 1D */
