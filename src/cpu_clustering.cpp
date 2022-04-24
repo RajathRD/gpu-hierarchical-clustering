@@ -23,23 +23,14 @@ using namespace std;
 void seq_clustering(float *, unsigned int, unsigned int, int *);
 void calculate_pairwise_dists(float *, int, int, float *);
 float calculate_dist(float *, int, int, int);
-void print_float_matrix(float *, int, int);
-void print_int_matrix(int *, int, int);
+void print_matrix(float *, int, int);
 void gen_data(float *, int, int);
 
 // Helper functions
-void print_float_matrix(float * a, int n, int m){
+void print_matrix(float * a, int n, int m){
   for(int i=0; i<n; i++){
     for(int j=0; j<m; j++)
       printf("%f ", a[index(i, j, m)]);
-    printf("\n");
-  }
-}
-
-void print_int_matrix(int * a, int n, int m){
-  for (int i=0; i<n; i++){
-    for(int j=0; j<m; j++)
-      printf("%d ", a[index(i,j,m)]);
     printf("\n");
   }
 }
@@ -54,7 +45,7 @@ void gen_data(float * dataset, int n, int m) {
   }
   if (PRINT_LOG){
     printf("Dataset:\n");
-    print_float_matrix(dataset, n, m);
+    print_matrix(dataset, n, m);
   }
 }
 
@@ -64,7 +55,6 @@ int main(int argc, char * argv[])
   int N;
   int M;
   float * dataset;
-  float * unittests;
   // to measure time taken by a specific part of the code 
   double time_taken;
   clock_t start, end;
@@ -73,9 +63,11 @@ int main(int argc, char * argv[])
 
   if(argc == 1)
   {
-    // TODO: We are running unit tests
+    // We are running unit tests
+    char ** tests;
+    // Read in the names of the test files
     string line;
-    ifstream myfile ("unittest/test_cases.txt");
+    ifstream myfile ("unittest/tests.txt");
     if (myfile.is_open()) {
         while ( getline (myfile,line) ) {
         cout << line << '\n';
@@ -135,10 +127,10 @@ int main(int argc, char * argv[])
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
 
   //Print Result
-  if(PRINT_LOG == 1) {
+  if(PRINT_LOG) {
     printf("Merges made, in order:\n");
     for (int i=0; i<N-1; i++){
-        printf("(%d, %d)\n", result[2*i], result[(2*i)+1]);
+        printf("(%d <- %d)\n", result[2*i], result[(2*i)+1]);
     }
   }
   
