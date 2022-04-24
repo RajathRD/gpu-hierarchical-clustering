@@ -13,7 +13,7 @@ using namespace std;
 
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
-#define PRINT_LOG 1
+#define PRINT_LOG 0
 /* Define constants */
 #define RANGE 100
 
@@ -135,9 +135,11 @@ int main(int argc, char * argv[])
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
 
   //Print Result
-  printf("Merges made, in order:\n");
-  for (int i=0; i<N-1; i++){
-    printf("(%d, %d)\n", result[2*i], result[(2*i)+1]);
+  if(PRINT_LOG == 1) {
+    printf("Merges made, in order:\n");
+    for (int i=0; i<N-1; i++){
+        printf("(%d, %d)\n", result[2*i], result[(2*i)+1]);
+    }
   }
   
   printf("Time taken for CPU is %lf\n", time_taken);
