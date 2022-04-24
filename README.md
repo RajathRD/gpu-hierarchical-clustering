@@ -1,16 +1,12 @@
 # gpu-project
 
-First, do  `chmod -R +x *.sh`.
+First, do  `chmod -R +x *.sh` and `./cpu_compile.sh` to compile.
 
 Then, to run for random dataset of size N x M, cd to root and do:
 
 `./cpu_clustering N M`
 
 To run unit tests, cd to root, do:
-
- `chmod -R +x *.sh` 
- 
- `./cpu_compile.sh`
  
  `./test.sh`
 
