@@ -64,13 +64,13 @@ int main(int argc, char * argv[])
   if(argc == 1)
   {
     // We are running unit tests
-    char ** tests;
+    vector<string> tests;
     // Read in the names of the test files
     string line;
     ifstream myfile ("unittest/tests.txt");
     if (myfile.is_open()) {
         while ( getline (myfile,line) ) {
-        cout << line << '\n';
+            tests.push_back(line);
         }
         myfile.close();
     }
