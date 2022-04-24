@@ -15,7 +15,7 @@ using namespace std;
 
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
-#define PRINT_LOG 0
+#define PRINT_LOG 1
 /* Define constants */
 #define RANGE 100
 
@@ -65,6 +65,7 @@ int main(int argc, char * argv[])
 
   if(argc == 1)
   {
+    printf("Hierarchical Clustering with Unit Tests:\n");
     // We are running unit tests
     vector<string> tests;
     // Read in the names of the test files
@@ -126,16 +127,34 @@ int main(int argc, char * argv[])
             cout << "Unable to open file";
         }
 
-        printf("N: %d\n", N);
-        printf("M: %d\n", M);
-        print_matrix(dataset, N, M);
+        printf("Test case %d\n", i);
+        printf("Dataset size: %d x %d\n", N, M);
 
+        // Allocate result array
         result = (int *)calloc(2*(N-1), sizeof(int));
         if( !result )
         {
             fprintf(stderr, " Cannot allocate result array of size %u\n", 2*(N-1));
             exit(1);
         }
+
+        // Perform clustering
+        start = clock();
+        seq_clustering(dataset, N, M, result);    
+        end = clock();
+        
+        time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
+
+        //Print Result
+        if(PRINT_LOG) {
+            printf("Merges made, in order:\n");
+            for (int i=0; i<N-1; i++){
+                printf("(%d <- %d)\n", result[2*i], result[(2*i)+1]);
+            }
+        }
+        
+        printf("Time taken for CPU is %lf\n", time_taken);
+        free(result);
     }
   }
   else if(argc == 3) {
@@ -162,6 +181,24 @@ int main(int argc, char * argv[])
       fprintf(stderr, " Cannot allocate result array of size %u\n", 2*(N-1));
       exit(1);
     }
+
+    // Perform clustering
+    start = clock();
+    seq_clustering(dataset, N, M, result);    
+    end = clock();
+    
+    time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
+
+    //Print Result
+    if(PRINT_LOG) {
+        printf("Merges made, in order:\n");
+        for (int i=0; i<N-1; i++){
+            printf("(%d <- %d)\n", result[2*i], result[(2*i)+1]);
+        }
+    }
+    
+    printf("Time taken for CPU is %lf\n", time_taken);
+    free(result);
   }
   else {
     fprintf(stderr, "usage:\n");
@@ -172,25 +209,7 @@ int main(int argc, char * argv[])
     exit(1);
   }
 
-  // Perform clustering
-  start = clock();
-  seq_clustering(dataset, N, M, result);    
-  end = clock();
-  
-  time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-
-  //Print Result
-  if(PRINT_LOG) {
-    printf("Merges made, in order:\n");
-    for (int i=0; i<N-1; i++){
-        printf("(%d <- %d)\n", result[2*i], result[(2*i)+1]);
-    }
-  }
-  
-  printf("Time taken for CPU is %lf\n", time_taken);
-
   free(dataset);
-  free(result);
 
   return 0;
 
