@@ -166,7 +166,7 @@ int main(int argc, char * argv[])
             printf("Merges made, in order:\n");
             cout << res << "\n";
         }
-        string output_path = "cpu_outputs/" + tests[test_idx];
+        string output_path = "unittest/cpu_outputs/" + tests[test_idx];
         ofstream res_output (output_path.c_str(), ios::out | ios::trunc);
         if (res_output.is_open())
         {
