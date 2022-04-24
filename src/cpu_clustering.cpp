@@ -94,10 +94,10 @@ int main(int argc, char * argv[])
                     int str_count = 0;
                     while( getline (iss, s, ' ') ) {
                         if(str_count == 0) {
-                            N = std::stoi(s);
+                            N = atoi(s.c_str());
                         }
                         else {
-                            M = std::stoi(s);
+                            M = atoi(s.c_str());
                         }
                         str_count++;
                     }
@@ -105,7 +105,7 @@ int main(int argc, char * argv[])
                 else {
                     int str_count = 0;
                     while( getline (iss, s, ' ') ) {
-                        dataset[index(file_count, str_count, M)] = std::stoi(s);
+                        dataset[index(file_count, str_count, M)] = atoi(s.c_str());
                         str_count++;
                     }
                 }
