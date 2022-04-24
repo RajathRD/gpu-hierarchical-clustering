@@ -85,7 +85,7 @@ int main(int argc, char * argv[])
         // For each test case
         // Read in the data
         int file_count = 0;
-        ifstream myfile (test_path);
+        ifstream myfile (test_path.c_str());
         if (myfile.is_open()) {
             while ( getline (myfile, line) ) {
                 istringstream iss (line);
