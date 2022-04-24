@@ -81,11 +81,11 @@ int main(int argc, char * argv[])
     }
 
     for(int i = 0; i< tests.size(); i++) {
-        string test = tests[i];
+        string test_path = "unittest/tests/" + tests[i];
         // For each test case
         // Read in the data
         int file_count = 0;
-        ifstream myfile ("unittest/tests/"+test);
+        ifstream myfile (test_path);
         if (myfile.is_open()) {
             while ( getline (myfile, line) ) {
                 istringstream iss (line);
@@ -94,10 +94,10 @@ int main(int argc, char * argv[])
                     int str_count = 0;
                     while( getline (iss, s, ' ') ) {
                         if(str_count == 0) {
-                            N = stoi(s);
+                            N = std::stoi(s);
                         }
                         else {
-                            M = stoi(s);
+                            M = std::stoi(s);
                         }
                         str_count++;
                     }
@@ -105,7 +105,7 @@ int main(int argc, char * argv[])
                 else {
                     int str_count = 0;
                     while( getline (iss, s, ' ') ) {
-                        dataset[index(file_count, str_count, M)] = stoi(s);
+                        dataset[index(file_count, str_count, M)] = std::stoi(s);
                         str_count++;
                     }
                 }
