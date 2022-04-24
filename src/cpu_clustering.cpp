@@ -9,6 +9,7 @@
 #include <utility>
 #include <algorithm>
 #include <limits.h>
+#include <vector>
 using namespace std;
 
 /* To index element (i,j) of a 2D array stored as 1D */
