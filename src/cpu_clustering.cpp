@@ -79,6 +79,10 @@ int main(int argc, char * argv[])
         cout << "Unable to open file";
     }
 
+    for(int i = 0; i< tests.size(); i++) {
+        cout << tests[i] << "\n";
+    }
+
     result = (int *)calloc(2*(N-1), sizeof(int));
     if( !result )
     {
