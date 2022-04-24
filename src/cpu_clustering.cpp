@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <limits.h>
 #include <vector>
+#include <sstream>
 using namespace std;
 
 /* To index element (i,j) of a 2D array stored as 1D */
@@ -80,14 +81,52 @@ int main(int argc, char * argv[])
     }
 
     for(int i = 0; i< tests.size(); i++) {
-        cout << tests[i] << "\n";
-    }
+        string test = tests[i];
+        // For each test case
+        // Read in the data
+        int file_count = 0;
+        ifstream myfile ("unittest/tests/"+test);
+        if (myfile.is_open()) {
+            while ( getline (myfile, line) ) {
+                istringstream iss (line);
+                string s;
+                if(file_count == 0) {
+                    int str_count = 0;
+                    while( getline (iss, s, ' ') ) {
+                        if(str_count == 0) {
+                            N = stoi(s);
+                        }
+                        else {
+                            M = stoi(s);
+                        }
+                        str_count++;
+                    }
+                }
+                else {
+                    int str_count = 0;
+                    while( getline (iss, s, ' ') ) {
+                        dataset[index(file_count, str_count, M)] = stoi(s);
+                        str_count++;
+                    }
+                }
+                file_count++;
+            }
+            myfile.close();
+        }
+        else {
+            cout << "Unable to open file";
+        }
 
-    result = (int *)calloc(2*(N-1), sizeof(int));
-    if( !result )
-    {
-        fprintf(stderr, " Cannot allocate result array of size %u\n", 2*(N-1));
-        exit(1);
+        printf("N: %d\n", N);
+        printf("M: %d\n", M);
+        print_matrix(dataset, N, M);
+
+        result = (int *)calloc(2*(N-1), sizeof(int));
+        if( !result )
+        {
+            fprintf(stderr, " Cannot allocate result array of size %u\n", 2*(N-1));
+            exit(1);
+        }
     }
   }
   else if(argc == 3) {
