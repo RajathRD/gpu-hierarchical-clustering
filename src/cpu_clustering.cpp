@@ -101,6 +101,15 @@ int main(int argc, char * argv[])
                         }
                         str_count++;
                     }
+
+                    //Malloc dataset
+                    dataset = (float *)calloc(N*M, sizeof(float));
+                    if( !dataset )
+                    {
+                        fprintf(stderr, " Cannot allocate the %u x %u array\n", N, M);
+                        exit(1);
+                    }
+
                 }
                 else {
                     int str_count = 0;
