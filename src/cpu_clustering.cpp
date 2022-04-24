@@ -86,8 +86,8 @@ int main(int argc, char * argv[])
         cout << "Unable to open file";
     }
 
-    for(int i = 0; i< tests.size(); i++) {
-        string test_path = "unittest/tests/" + tests[i];
+    for(int test_idx = 0; test_idx< tests.size(); test_idx++) {
+        string test_path = "unittest/tests/" + tests[test_idx];
         // For each test case
         // Read in the data
         int file_count = 0;
@@ -132,7 +132,7 @@ int main(int argc, char * argv[])
             cout << "Unable to open input file\n";
         }
 
-        printf("Test case %d\n", i+1);
+        printf("Test case %d\n", test_idx+1);
         printf("Dataset size: %d x %d\n", N, M);
         if (PRINT_LOG){
           printf("Dataset:\n");
@@ -166,7 +166,7 @@ int main(int argc, char * argv[])
             printf("Merges made, in order:\n");
             cout << res << "\n";
         }
-        string output_path = "cpu_outputs/" + tests[i];
+        string output_path = "cpu_outputs/" + tests[test_idx];
         ofstream res_output (output_path.c_str(), ios::trunc);
         if (res_output.is_open())
         {
