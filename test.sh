@@ -5,5 +5,6 @@ python unittest/gen_correct_output.py
 # Compare outputs
 while IFS="" read -r p || [ -n "$p" ]
 do
+  printf '%s\n' "$p"
   diff unittest/correct_outputs/$p unittest/cpu_outputs/$p
 done < unittest/tests.txt
