@@ -338,7 +338,7 @@ void calculate_pairwise_dists(float * dataset, int N, int M, float * dist_matrix
 float calculate_dist(float * dataset, int i, int j, int dim) {
   float dist = 0;
   for (int mi = 0; mi < dim; mi++){
-    dist += (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]) * (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]);
+    dist += sqrt((dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]) * (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]));
   }
   return dist;
 }
