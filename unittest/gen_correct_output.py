@@ -25,7 +25,6 @@ for test in tests:
     
     # Compute distance matrix
     dists = pairwise_distances(dataset)
-    #print(dists)
 
     res = ""
 
