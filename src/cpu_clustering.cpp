@@ -25,11 +25,20 @@ using namespace std;
 void seq_clustering(float *, unsigned int, unsigned int, int *);
 void calculate_pairwise_dists(float *, int, int, float *);
 float calculate_dist(float *, int, int, int);
-void print_matrix(float *, int, int);
+void print_int_matrix(int *, int, int);
+void print_float_matrix(float *, int, int);
 void gen_data(float *, int, int);
 
 // Helper functions
-void print_matrix(float * a, int n, int m){
+void print_int_matrix(int * a, int n, int m){
+  for(int i=0; i<n; i++){
+    for(int j=0; j<m; j++)
+      printf("%d ", a[index(i, j, m)]);
+    printf("\n");
+  }
+}
+
+void print_float_matrix(float * a, int n, int m){
   for(int i=0; i<n; i++){
     for(int j=0; j<m; j++)
       printf("%f ", a[index(i, j, m)]);
@@ -127,7 +136,7 @@ int main(int argc, char * argv[])
         printf("Dataset size: %d x %d\n", N, M);
         if (PRINT_LOG){
           printf("Dataset:\n");
-          print_matrix(dataset, N, M);
+          print_float_matrix(dataset, N, M);
         }
 
         // Allocate result array
@@ -176,7 +185,7 @@ int main(int argc, char * argv[])
     printf("Data loaded!\n");
     if (PRINT_LOG){
       printf("Dataset:\n");
-      print_matrix(dataset, N, M);
+      print_float_matrix(dataset, N, M);
     }
 
     result = (int *)calloc(2*(N-1), sizeof(int));
@@ -248,7 +257,7 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
 
   if (PRINT_LOG){
     printf("Distance matrix:\n");
-    print_matrix(C, N, N);
+    print_float_matrix(C, N, N);
   }
 
   // Allocate I array
