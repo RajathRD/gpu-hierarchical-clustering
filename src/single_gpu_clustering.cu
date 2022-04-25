@@ -249,7 +249,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
     while (size > 1){
       block_cnt = (int)ceil((float)size/thread_cnt);
       cudaMemcpy(indices_d, indices_ptr, size*sizeof(unsigned int), cudaMemcpyHostToDevice);
-      min_reduction<<<block_cnt, thread_cnt>>>(dist_matrix_d, indices_d, block_mins_d, size);
+      min_reduction<<<block_cnt, thread_cnt, thread_cnt*sizeof(unsigned int)>>>(dist_matrix_d, indices_d, block_mins_d, size);
       cudaMemcpy(block_mins, block_mins_d, block_cnt*sizeof(unsigned int), cudaMemcpyDeviceToHost);
       indices_ptr = block_mins;
       size = block_cnt;
@@ -362,67 +362,66 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
   }
 }
 
-__global__ void min_reduction(float *arr, unsigned int * indices, unsigned int * block_mins, unsigned int n){
-  unsigned int offset = blockDim.x * blockIdx.x;
-  unsigned int tid = threadIdx.x;
-  unsigned int index = threadIdx.x + blockIdx.x * blockDim.x;
-  int stride = blockDim.x / 2;
-  int left = index, right = left + stride;
-
-  if (index < n){
-    while (stride > 0){
-      left = offset + tid;
-      right = left + stride;
-      
-      if (tid < stride && right < n){
-          // printf("stride: %d, left: %d, right: %d\n", stride, left, right);
-          // printf("a[%d]=%.2f, a[%d]=%.2f\n", indices[left], arr[indices[left]], indices[right], arr[indices[right]]);
-          if(arr[indices[left]] > arr[indices[right]]){
-              indices[left] = indices[right];
-          }
-      }
-      stride /= 2;
-      __syncthreads();
-    }
-  }
-
-  if (tid == 0){
-    block_mins[blockIdx.x] = indices[offset];
-  }
-}
-
-// shared_memory
 // __global__ void min_reduction(float *arr, unsigned int * indices, unsigned int * block_mins, unsigned int n){
-//   extern __shared__ unsigned int sindices[];
 //   unsigned int offset = blockDim.x * blockIdx.x;
 //   unsigned int tid = threadIdx.x;
 //   unsigned int index = threadIdx.x + blockIdx.x * blockDim.x;
 //   int stride = blockDim.x / 2;
 //   int left = index, right = left + stride;
-  
-//   sindices[tid] = indices[index];
-//   __syncthreads();
 
 //   if (index < n){
 //     while (stride > 0){
-//         left = tid;
-//         right = left + stride;
-//         if (tid < stride && right < n){
-//             // printf("stride: %d, left: %d, right: %d\n", stride, left, right);
-//             // printf("a[%d]=%.2f, a[%d]=%.2f\n", sindices[left], arr[sindices[left]], sindices[right], arr[sindices[right]]);
-
-//             if(arr[sindices[left]] > arr[sindices[right]]){
-//                 sindices[left] = sindices[right];
-//             }
-//         }
+//       left = offset + tid;
+//       right = left + stride;
+      
+//       if (tid < stride && right < n){
+//           // printf("stride: %d, left: %d, right: %d\n", stride, left, right);
+//           // printf("a[%d]=%.2f, a[%d]=%.2f\n", indices[left], arr[indices[left]], indices[right], arr[indices[right]]);
+//           if(arr[indices[left]] > arr[indices[right]]){
+//               indices[left] = indices[right];
+//           }
+//       }
 //       stride /= 2;
 //       __syncthreads();
 //     }
 //   }
+
 //   if (tid == 0){
-//     block_mins[blockIdx.x] = sindices[0];
+//     block_mins[blockIdx.x] = indices[offset];
 //   }
 // }
+
+// shared_memory
+__global__ void min_reduction(float *arr, unsigned int * indices, unsigned int * block_mins, unsigned int n){
+  extern __shared__ unsigned int sindices[];
+  unsigned int tid = threadIdx.x;
+  unsigned int index = threadIdx.x + blockIdx.x * blockDim.x;
+  int stride = blockDim.x / 2;
+  int left = index, right = left + stride;
+  
+  sindices[tid] = indices[index];
+  __syncthreads();
+
+  if (index < n){
+    while (stride > 0){
+        left = tid;
+        right = left + stride;
+        if (tid < stride && right < n){
+            // printf("stride: %d, left: %d, right: %d\n", stride, left, right);
+            // printf("a[%d]=%.2f, a[%d]=%.2f\n", sindices[left], arr[sindices[left]], sindices[right], arr[sindices[right]]);
+
+            if(arr[sindices[left]] > arr[sindices[right]]){
+                sindices[left] = sindices[right];
+            }
+        }
+      stride /= 2;
+      __syncthreads();
+    }
+  }
+  if (tid == 0){
+    block_mins[blockIdx.x] = sindices[0];
+  }
+}
 
 // __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices) {
 //   int index = threadIdx.x + blockIdx.x * blockDim.x;
