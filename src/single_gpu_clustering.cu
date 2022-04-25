@@ -13,10 +13,10 @@
 
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
-
+#define swap(a,b)   {a^=b; b^=a; a^=b;}
 /* Config params */
 #define PRINT_LOG 0
-#define PRINT_DENDRO 0
+#define PRINT_DENDRO 1
 #define PRINT_ANALYSIS 0
 
 /* Define constants */
@@ -37,9 +37,9 @@ int get_parent(int, int *);
 
 // Kernel functions
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices);
 __global__ void remove_cluster(float * dist_matrix_d, int right_cluster, int n);
 __global__ void update_cluster(float * dist_matrix_d, int left_cluster, int right_cluster, int n);
+__global__ void min_reduction(float *, unsigned int *, unsigned int *, unsigned int);
 
 /*************************** Helper Functions **************************************/
 void print_float_matrix(float * a, int n, int m){
@@ -170,127 +170,10 @@ int main(int argc, char * argv[])
   return 0;
 }
 
-
-/*****************  The CPU sequential version **************/
-void  seq_clustering(float * dataset, unsigned int n, unsigned int m, float * dendrogram)
-{
-  // to measure time taken by a specific part of the code 
-  double time_taken;
-  clock_t start, end;
-  
-  int * result = (int *)calloc(n, sizeof(int));
-  if( !result ) {
-   fprintf(stderr, " Cannot allocate result %u array\n", n);
-   exit(1);
-  }
-
-  for (int i = 0; i < n; i++) result[i] = i;
-
-  float* dist_matrix = (float *)calloc(n*n, sizeof(float));
-  if( !dist_matrix ) {
-   fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
-   exit(1);
-  }
-
-  // O(n*n*m) -> GPU
-  start = clock();
-  calculate_pairwise_dists(dataset, n, m, dist_matrix);
-  if (PRINT_LOG)
-    print_float_matrix(dist_matrix, n, n);
-  end = clock();
-
-  time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-  // if (PRINT_ANALYSIS)
-  //   printf("Time taken for distance computation: %lf\n", time_taken);
-  
-  start = clock();
-  for (int iteration=0; iteration < n - 1; iteration++) {
-    float entry[3]; 
-
-    // O(I*n*n) -> GPU
-    find_pairwise_min(dist_matrix, n, entry, result);
-    
-    dendrogram[index(iteration, 0, 3)] = entry[0];
-    dendrogram[index(iteration, 1, 3)] = entry[1];
-    dendrogram[index(iteration, 2, 3)] = entry[2];
-
-    // O(I*n) -> amortized O(I)
-    merge_clusters(result, (int)entry[0], (int)entry[1], n);
-  }
-
-  end = clock();
-  time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-  if (PRINT_ANALYSIS)
-      printf("Time taken for merge cluster, Iteration %lf\n",time_taken);
-    
-  for (int i=0; i<n; i++) result[i] = get_parent(i, result);
-
-  free(dist_matrix);
-  free(result);
-}
-
-void calculate_pairwise_dists(float * dataset, int n, int m, float * dist_matrix) {
-  // O(n)
-  // for (int i = 0; i < n*n; i++) dist_matrix[i] = FLT_MAX;
-  
-  // O(n*n*m)
-  for (int i = 0; i < n; i++) {
-    for (int j = i+1; j < n; j++) {
-      // O(m)
-      dist_matrix[index(i, j, n)] = calculate_dist(dataset, i, j, m);
-    }
-  }  
-}
-
-// passing vec1_i and vec2_i instead of float * as dist_matrix is 1-D
-float calculate_dist(float * dataset, int i, int j, int dim) {
-  float dist = 0;
-  // O(m)
-  for (int mi = 0; mi < dim; mi++) {
-    float x = (dataset[index(i, mi, dim)] - dataset[index(j,mi,dim)]);
-    dist += x * x;
-  }
-  return dist;
-}
-
-int get_parent(int curr_parent, int* parents) {
-  if (parents[curr_parent] == curr_parent) return curr_parent;
-  parents[curr_parent] = get_parent(parents[curr_parent], parents);
-  return parents[curr_parent];
-}
-
-
-void find_pairwise_min(float * dist_matrix, int n, float* entry, int* parents) {
-  entry[0] = 0;
-  entry[1] = 0;
-  entry[2] = FLT_MAX;
-  for (int i = 0; i < n; i++) {
-    for (int j = i+1; j < n; j++) {
-      if (get_parent(i, parents) != get_parent(j, parents)) {
-        float curr_dist = dist_matrix[index(i, j, n)];
-        if (curr_dist < entry[2]) {
-          entry[0] = i;
-          entry[1] = j;
-          entry[2] = curr_dist;
-        }
-      }
-    }
-  }
-}
-
-
-void merge_clusters(int * result, int data_point_i, int data_point_j, int dim) {
-  if (!(data_point_i >= 0 && data_point_i < dim && data_point_j >= 0 && data_point_j < dim)) {
-    printf("merge_clusters out of bounds");
-    return;
-  } 
-  int parent_i = get_parent(data_point_i, result);
-  result[get_parent(data_point_j, result)] = parent_i;
-} 
-
 /***************** The GPU version *********************/
 void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * dendrogram){
   double time_taken;
+  unsigned int size;
   clock_t start, end;
 
   // FIXME: Remove this in final cleanup, here only for testing
@@ -308,10 +191,15 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   }
 
   // Temp array used by kernel function to find element in a distance matrix
-  int * indices;
-  cudaMalloc((void**) &indices, n*n*sizeof(int));
-  if (!indices) {
-    fprintf(stderr, " Cannot allocate cuda indices %u array\n", n*n);
+  unsigned int* indices = (unsigned int *)calloc(n*n, sizeof(unsigned int));
+  unsigned int* indices_ptr = &indices[0];
+  // TODO: check for failure of alloc
+  for (int i=0; i<n*n; i++) indices[i]=i;
+
+  unsigned int * indices_d;
+  cudaMalloc((void**) &indices_d, n*n*sizeof(unsigned int));
+  if (!indices_d) {
+    fprintf(stderr, " Cannot allocate cuda indices_d %u array\n", n*n);
     exit(1);
   }
 
@@ -325,13 +213,13 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
 
   // Maximum number of threads per block in cuda1.cims.nyu.edu 
   int thread_cnt = 1024;
-  int block_cnt = (int) ceil((float)n*n / thread_cnt);
+  int block_cnt = (int) ceil(n*n / (double)thread_cnt);
   printf("Launching kernel with %d blocks and %d threads\n", block_cnt, thread_cnt);
 
   // O(1)
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
-  cudaDeviceSynchronize();
+  // cudaDeviceSynchronize();
   if (PRINT_LOG) {
     printf("Dist Matrix:\n");
     cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
@@ -345,51 +233,44 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   
   start = clock();
 
+  // TODO: check for failure
+  thread_cnt = 1024;
+  block_cnt = (int) ceil(n*n / (double)thread_cnt);
+  unsigned int * block_mins = (unsigned int *) calloc (block_cnt, sizeof(unsigned int));
+  unsigned int * block_mins_d;
+  cudaMalloc((void**)&block_mins_d, block_cnt*sizeof(unsigned int));
   // O(n)
   for (int iteration=0; iteration < n - 1; iteration++) {
     // printf("\n\n --> iteration = %d\n", iteration);
-
-    // O(log n)
-    find_pairwise_min_cuda<<<block_cnt, thread_cnt>>> (dist_matrix_d, n, indices);
-    cudaDeviceSynchronize();
-
-    // Move min value index to host memory
-    int* min_val_idx;
-    if(!(min_val_idx = (int *) malloc(sizeof(int)))) {
-      printf("Error allocating min_val_idx\n");
-      exit(1);
+    size = n*n;
+    block_cnt = (int) ceil( n*n / (double)thread_cnt);
+    indices_ptr = indices;
+    
+    while (size > 1){
+      block_cnt = (int)ceil((float)size/thread_cnt);
+      cudaMemcpy(indices_d, indices_ptr, size*sizeof(unsigned int), cudaMemcpyHostToDevice);
+      min_reduction<<<block_cnt, thread_cnt>>>(dist_matrix_d, indices_d, block_mins_d, size);
+      cudaMemcpy(block_mins, block_mins_d, block_cnt*sizeof(unsigned int), cudaMemcpyDeviceToHost);
+      indices_ptr = block_mins;
+      size = block_cnt;
     }
-    cudaMemcpy(min_val_idx, indices, sizeof(int), cudaMemcpyDeviceToHost);
-
-    // Move min value to host memory
-    float* min_val;
-    if(!(min_val = (float *) malloc(sizeof(float)))) {
-      printf("Error allocating min_val\n");
-      exit(1);
-    }
-    cudaMemcpy(min_val, (dist_matrix_d+*min_val_idx), sizeof(float), cudaMemcpyDeviceToHost);
-
-    float min_value = *min_val;
-    int i = *min_val_idx/n;
-    int j = *min_val_idx%n;
-
-    // Deallocated memories used to move results from device to host
-    free(min_val);
-    free(min_val_idx);
+    
+    unsigned int min_val_idx = block_mins[0];
+    float min_value = dist_matrix[min_val_idx];
+    int i = min_val_idx/n;
+    int j = min_val_idx%n;
 
     // Always i should be smaller than j - cluster with higher index gets merged to the cluster with lower index
-    if (i > j) {
-      int temp = j;
-      j = i;
-      i = temp;
-    }
+    if (i > j) swap(i,j)
 
     // printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
 
     dendrogram[index(iteration, 0, 3)] = (float) i;
     dendrogram[index(iteration, 1, 3)] = (float) j;
     dendrogram[index(iteration, 2, 3)] = min_value;
-
+    
+    thread_cnt = 1024;
+    block_cnt = (int) ceil(n*n / (double)thread_cnt);
     // O(1) - Update left cluster's distance with all others
     update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, i, j, n);
     cudaDeviceSynchronize();
@@ -399,6 +280,9 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
       print_float_matrix(dist_matrix, n, n);
     }
 
+    thread_cnt = 1024;
+    block_cnt = (int) ceil(n*n / (double)thread_cnt);    
+    
     // O(1) - Remove right clusters from further consideration
     remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, j, n);
     cudaDeviceSynchronize();
@@ -407,10 +291,10 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
       cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
       print_float_matrix(dist_matrix, n, n);
     }
+    
   }
-
   cudaFree(dataset_d);
-  cudaFree(indices);
+  cudaFree(indices_d);
   cudaFree(dist_matrix_d);
 }
 
@@ -462,60 +346,118 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
   int index = threadIdx.x + blockDim.x * blockIdx.x;
   // Dont update if thread id is outside of the box
   if (index < n*n){
-    int i = index / n;
-    int j = index % n;
-    if (i<n && j < n) {
-      if (i == j) dist_matrix[index(i, j, n)] = FLT_MAX;
+    int r = index / n;
+    int c = index % n;
+    if (r<n && c < n) {
+      if (r >= c) dist_matrix[index(r, c, n)] = FLT_MAX;
       else {
         float dist = 0;
         for(int mi=0; mi<m; mi++){
-          float x = (dataset[index(i, mi, m)] - dataset[index(j,mi,m)]);
+          float x = (dataset[index(r, mi, m)] - dataset[index(c,mi,m)]);
           dist += x * x;
         }
-        dist_matrix[index(i, j, n)] = dist;
+        dist_matrix[index(r, c, n)] = dist;
       }
     }
   }
 }
 
-/*
-  Finds minimum index of a minimum element in an array
-  FIXME: See if you can optimize this method.
-*/
-__global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices) {
-  int index = threadIdx.x + blockIdx.x * blockDim.x;
+__global__ void min_reduction(float *arr, unsigned int * indices, unsigned int * block_mins, unsigned int n){
+  unsigned int offset = blockDim.x * blockIdx.x;
+  unsigned int tid = threadIdx.x;
+  unsigned int index = threadIdx.x + blockIdx.x * blockDim.x;
+  int stride = blockDim.x / 2;
+  int left = index, right = left + stride;
 
-  int stride = n*n/2;
-  while (true) {
-    __syncthreads();
-    if (index <= stride) {
-      int left_idx = index;
-      int right_idx = index + stride + 1;
-
-      float left_val = (stride == n*n/2) ? dist_matrix_d[left_idx] : dist_matrix_d[indices[left_idx]];
-      // We can be outside of boundary in first iteration, handle it gracefully
-      float right_val = FLT_MAX;
-      if (right_idx < n*n) {
-        right_val = (stride == n*n/2) ? dist_matrix_d[right_idx] : dist_matrix_d[indices[right_idx]];
+  if (index < n){
+    while (stride > 0){
+      left = offset + tid;
+      right = left + stride;
+      
+      if (tid < stride && right < n){
+          // printf("stride: %d, left: %d, right: %d\n", stride, left, right);
+          // printf("a[%d]=%.2f, a[%d]=%.2f\n", indices[left], arr[indices[left]], indices[right], arr[indices[right]]);
+          if(arr[indices[left]] > arr[indices[right]]){
+              indices[left] = indices[right];
+          }
       }
-
-      // printf("find_pairwise_min_cuda - left_idx %d, indices[left_idx] %d, left_val %.2f and right_idx %d, indices[right_idx] %d, right_val %.2f | index %d, stride %d, n %d\n", 
-      // left_idx, indices[left_idx], left_val, right_idx, indices[right_idx], right_val, index, stride, n);
-
-      if (left_val <= right_val) {
-        indices[left_idx] = (stride == n*n/2) ? left_idx : indices[left_idx];
-      } else {
-        indices[left_idx] = (stride == n*n/2) ? right_idx : indices[right_idx];
-      }
-
-      // printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, dist_matrix_d[indices[left_idx]] %.2f\n", left_idx, indices[left_idx], dist_matrix_d[indices[left_idx]]);
+      stride /= 2;
+      __syncthreads();
     }
+  }
 
-    // Do last check when there are just 2 elements in the array (when stride is 0)
-    if (stride == 0) break;
-    stride /= 2;
+  if (tid == 0){
+    block_mins[blockIdx.x] = indices[offset];
   }
 }
+
+// shared_memory
+// __global__ void min_reduction(float *arr, unsigned int * indices, unsigned int * block_mins, unsigned int n){
+//   extern __shared__ unsigned int sindices[];
+//   unsigned int offset = blockDim.x * blockIdx.x;
+//   unsigned int tid = threadIdx.x;
+//   unsigned int index = threadIdx.x + blockIdx.x * blockDim.x;
+//   int stride = blockDim.x / 2;
+//   int left = index, right = left + stride;
+  
+//   sindices[tid] = indices[index];
+//   __syncthreads();
+
+//   if (index < n){
+//     while (stride > 0){
+//         left = tid;
+//         right = left + stride;
+//         if (tid < stride && right < n){
+//             // printf("stride: %d, left: %d, right: %d\n", stride, left, right);
+//             // printf("a[%d]=%.2f, a[%d]=%.2f\n", sindices[left], arr[sindices[left]], sindices[right], arr[sindices[right]]);
+
+//             if(arr[sindices[left]] > arr[sindices[right]]){
+//                 sindices[left] = sindices[right];
+//             }
+//         }
+//       stride /= 2;
+//       __syncthreads();
+//     }
+//   }
+//   if (tid == 0){
+//     block_mins[blockIdx.x] = sindices[0];
+//   }
+// }
+
+// __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indices) {
+//   int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+//   int stride = blockDim.x/2;
+//   while (true) {
+//     __syncthreads();
+//     if (index <= stride) {
+//       int left_idx = index;
+//       int right_idx = index + stride + 1;
+
+//       float left_val = (stride == n*n/2) ? dist_matrix_d[left_idx] : dist_matrix_d[indices[left_idx]];
+//       // We can be outside of boundary in first iteration, handle it gracefully
+//       float right_val = FLT_MAX;
+//       if (right_idx < n*n) {
+//         right_val = (stride == n*n/2) ? dist_matrix_d[right_idx] : dist_matrix_d[indices[right_idx]];
+//       }
+
+//       // printf("find_pairwise_min_cuda - left_idx %d, indices[left_idx] %d, left_val %.2f and right_idx %d, indices[right_idx] %d, right_val %.2f | index %d, stride %d, n %d\n", 
+//       // left_idx, indices[left_idx], left_val, right_idx, indices[right_idx], right_val, index, stride, n);
+
+//       if (left_val <= right_val) {
+//         indices[left_idx] = (stride == n*n/2) ? left_idx : indices[left_idx];
+//       } else {
+//         indices[left_idx] = (stride == n*n/2) ? right_idx : indices[right_idx];
+//       }
+
+//       // printf("find_pairwise_min_cuda (answer) - left_idx %d, indices[left_idx] %d, dist_matrix_d[indices[left_idx]] %.2f\n", left_idx, indices[left_idx], dist_matrix_d[indices[left_idx]]);
+//     }
+
+//     // Do last check when there are just 2 elements in the array (when stride is 0)
+//     if (stride == 0) break;
+//     stride /= 2;
+//   }
+// }
 
 
 /*
