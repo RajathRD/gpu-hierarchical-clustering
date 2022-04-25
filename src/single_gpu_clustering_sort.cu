@@ -8,6 +8,7 @@
 #include<iostream>
 
 #define index(i, j, N)  ((i)*(N)) + (j)
+#define swap(a,b)   {a^=b; b^=a; a^=b;}
 /* Define constants */
 #define PRINT_DENDRO 0
 #define RANGE 100
@@ -130,13 +131,6 @@ void update_cluster_cpu(unsigned int * cluster, unsigned int cluster_1, unsigned
     }
 }
 
-int get_parent(unsigned int curr_parent, unsigned int* parents) {
-  if (parents[curr_parent] == curr_parent) return curr_parent;
-  parents[curr_parent] = get_parent(parents[curr_parent], parents);
-  return parents[curr_parent];
-  // return get_parent(parents[curr_parent], parents);
-}
-
 void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendrogram)
 {
   // // ith data point belong to cluster[i]
@@ -226,20 +220,27 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
     
     vec_idx_1 = indices[i]/n;
     vec_idx_2 = indices[i]%n;
+
+    
     distance = dist_matrix[index(vec_idx_1, vec_idx_2, n)];
     
     if (distance == FLT_MAX) break;
 
-    if (cluster[vec_idx_1] != cluster[vec_idx_2]){
+    if (get_parent(vec_idx_1, cluster_ptr) != get_parent(vec_idx_2, cluster_ptr)){
         // std::cout << "Itr: "<< iteration << " " << std::endl;
-        unsigned int cluster_1 = cluster[vec_idx_1];
-        unsigned int cluster_2 = cluster[vec_idx_2];
+        // unsigned int cluster_1 = cluster[vec_idx_1];
+        // unsigned int cluster_2 = cluster[vec_idx_2];
 
         // CPU Update
         
         // update_cluster_cpu(cluster_ptr, cluster_1, cluster_2, n);
-
+        if (cluster[vec_idx_1] > cluster[vec_idx_2]) swap(vec_idx_1, vec_idx_2);
+        dendrogram[index(iteration, 0, 3)] = cluster[vec_idx_1];
+        dendrogram[index(iteration, 1, 3)] = cluster[vec_idx_2];
+        dendrogram[index(iteration, 2, 3)] = distance;
         merge_clusters(cluster_ptr, vec_idx_1, vec_idx_2, n);
+        // printf("%d %d: ", vec_idx_1, vec_idx_2);
+        // print_int_matrix(cluster_ptr, 1, n);
         
         // // GPU Update
         // int thread_cnt = 1024;
@@ -249,9 +250,7 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
         
         
         // print_thrustint_matrix(cluster, 1, n);
-        dendrogram[index(iteration, 0, 3)] = vec_idx_1;
-        dendrogram[index(iteration, 1, 3)] = vec_idx_2;
-        dendrogram[index(iteration, 2, 3)] = distance;
+
         iteration ++;
     }
   }
@@ -285,6 +284,14 @@ float calculate_dist(float * dataset, int i, int j, int dim) {
     dist += x * x;
   }
   return dist;
+}
+
+
+int get_parent(unsigned int curr_parent, unsigned int* parents) {
+  if (parents[curr_parent] == curr_parent) return curr_parent;
+  parents[curr_parent] = get_parent(parents[curr_parent], parents);
+  return parents[curr_parent];
+  // return get_parent(parents[curr_parent], parents);
 }
 
 void merge_clusters(unsigned int * cluster, unsigned int data_point_i, unsigned int data_point_j, unsigned int dim) {
