@@ -59,7 +59,7 @@ void load_data(float * dataset, int n, int m) {
       dataset[index(i, j, m)] = ((float)rand()/(float)(RAND_MAX)) * RANGE - RANGE/2.0;
     } 
   }
-  if (PRINT_LOG){
+  if (PRINT_ANALYSIS){
     printf("Dataset:\n");
     print_float_matrix(dataset, n, m);
   }
