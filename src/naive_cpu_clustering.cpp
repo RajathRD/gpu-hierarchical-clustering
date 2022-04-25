@@ -111,7 +111,7 @@ int main(int argc, char * argv[])
     printf("Dendrogram:\n");
     print_float_matrix(dendrogram, n-1, 3);
   }
-  printf("Time taken %lf\n", time_taken);
+  printf("Time taken for CPU %lf\n", time_taken);
   
   free(dataset);
 

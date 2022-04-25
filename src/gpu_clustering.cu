@@ -108,10 +108,11 @@ int main(int argc, char * argv[])
   
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   
-  printf("Time taken for %s is %lf\n", type_of_device == 0? "CPU" : "GPU", time_taken);
-
-  printf("Dendrogram:\n");
-  print_float_matrix(dendrogram, n-1, 3);
+  if (PRINT_LOG) {
+    printf("Dendrogram:\n");
+    print_float_matrix(dendrogram, n-1, 3);
+  }
+  printf("Time taken for GPU %lf\n", time_taken);
   
   free(dataset);
 
