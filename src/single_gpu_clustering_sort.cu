@@ -9,7 +9,7 @@
 
 #define index(i, j, N)  ((i)*(N)) + (j)
 /* Define constants */
-#define PRINT_ANALYSIS 0
+#define PRINT_DENDRO 0
 #define RANGE 100
 
 // Host Functions
@@ -71,7 +71,7 @@ void print_thrustint_matrix(thrust::host_vector<unsigned int> &a, unsigned int n
 
 void print_dendro(float * dendrogram, int iteration){
   for(int i=0; i<iteration; i++){
-      std::cout << "I:" << i << " -- " << dendrogram[index(i, 0, 3)] << " <- " << dendrogram[index(i, 1, 3)] << " :" << dendrogram[index(i, 2, 3)] << std::endl;
+      printf("I: %d -- (%.0f <- %.0f) : %.2f\n", i+1, dendrogram[index(i, 0, 3)], dendrogram[index(i, 1, 3)], dendrogram[index(i, 2, 3)]);
   }
 }
 
@@ -87,6 +87,8 @@ void load_data(float * dataset, int n, int m) {
 
 int main(int argc, char * argv[])
 {
+    double time_taken;
+    clock_t start, end;
     int n = atoi(argv[1]);
     int m = atoi(argv[2]);
 
@@ -109,9 +111,13 @@ int main(int argc, char * argv[])
     printf("Data loaded!\n");
 
     float dendrogram[(n-1)*3];
-    
+    start = clock();
     clustering(dataset, n, m, dendrogram);   
+    end = clock();    
     
+    time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
+    
+    printf("Time taken for %s is %lf\n", "GPU", time_taken);
     return 0;
 }
 
@@ -119,6 +125,13 @@ void update_cluster_cpu(unsigned int * cluster, unsigned int cluster_1, unsigned
     for (int i=0; i<n; i++){
         if (cluster[i] == cluster_2) cluster[i] = cluster_1;
     }
+}
+
+int get_parent(int curr_parent, int* parents) {
+  if (parents[curr_parent] == curr_parent) return curr_parent;
+  parents[curr_parent] = get_parent(parents[curr_parent], parents);
+  return parents[curr_parent];
+  // return get_parent(parents[curr_parent], parents);
 }
 
 void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendrogram)
@@ -173,7 +186,7 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
 //   print_thrustfloat_matrix(dist_matrix, n, n);
 
   thrust::host_vector<thrust::pair<unsigned int, unsigned int>> indices(n*n);
-  std::cout <<"GPU: Calculated GPU Pairwise Dists" << std::endl;
+  // std::cout <<"GPU: Calculated GPU Pairwise Dists" << std::endl;
 
   for (int i=0; i<n*n; i++){
     indices[i] = {i/n, i%n};
@@ -184,7 +197,7 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
   thrust::sort_by_key(dist_matrix_d.begin(), dist_matrix_d.end(), indices_d.begin());
    
   thrust::copy(indices_d.begin(), indices_d.end(), indices.begin());
-  std::cout <<"GPU: Sorted Pairwise Dists" << std::endl;
+  // std::cout <<"GPU: Sorted Pairwise Dists" << std::endl;
   // for(int i = 0; i < n*n; i++){
   //   int r = indices[i].first, c = indices[i].second;
   //   std::cout << r << " " << c << " :" << dist_matrix[index(r,c,n)] << std::endl;
@@ -201,7 +214,7 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
   int iteration = 0, vec_idx_1, vec_idx_2;
   float distance;
 
-  std::cout <<"Building Dendrogram" << std::endl;
+  // std::cout <<"Building Dendrogram" << std::endl;
   for(int i=0; i<n*n; i++) {
     
     vec_idx_1 = indices[i].first;
@@ -216,6 +229,7 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
         unsigned int cluster_2 = cluster[vec_idx_2];
 
         // CPU Update
+        
         update_cluster_cpu(cluster_ptr, cluster_1, cluster_2, n);
         
         // // GPU Update
@@ -232,9 +246,10 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
         iteration ++;
     }
   }
-  std::cout <<"Finished Building Dendrogram" << std::endl;
+  // std::cout <<"Finished Building Dendrogram" << std::endl;
   cudaFree(dataset_d);
-  // print_dendro(dendrogram, iteration);
+  if (PRINT_DENDRO)
+    print_dendro(dendrogram, iteration);
 }
 
 void calculate_pairwise_dists(float * dataset, int n, int m, float * dist_matrix) {

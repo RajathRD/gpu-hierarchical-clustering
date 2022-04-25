@@ -16,6 +16,7 @@
 
 /* Config params */
 #define PRINT_LOG 0
+#define PRINT_DENDRO 0
 #define PRINT_ANALYSIS 0
 
 /* Define constants */
@@ -77,6 +78,13 @@ void load_data(float * dataset, int n, int m) {
   }
 }
 
+void print_dendro(float * dendrogram, unsigned int n){
+  printf("Dendrogram:\n");
+  for(int i=0; i<n-1; i++){
+      printf("I: %d -- (%.0f <- %.0f) : %.2f\n", i+1, dendrogram[index(i, 0, 3)], dendrogram[index(i, 1, 3)], dendrogram[index(i, 2, 3)]);
+  }
+}
+
 // void load_test_data(float * dataset) {
 //   float arr[6][2] = {
 //     {0.0,0.0},
@@ -107,13 +115,13 @@ int main(int argc, char * argv[])
 {
   //Define variables
   //unsigned int N; /* Dimention of NxN matrix */
-  int type_of_device = atoi(argv[3]); // CPU or GPU
+  
   int n = atoi(argv[1]);
   int m = atoi(argv[2]);
 
   printf("Hierarchical Clustering:\n");
   printf("Dataset size: %d x %d\n", n, m);
-  printf("Device Type: %d\n", type_of_device);
+  
   
   // to measure time taken by a specific part of the code 
   double time_taken;
@@ -140,27 +148,22 @@ int main(int argc, char * argv[])
   //load_test_data(dataset);
   printf("Data loaded!\n");
   
-  type_of_device = atoi(argv[3]);
+
 
   float dendrogram[(n-1)*3];
-  if( type_of_device == 0 ) { 
-    // The CPU sequential version 
-    start = clock();
-    seq_clustering(dataset, n, m, dendrogram);    
-    end = clock();
-  } else {
-    // The GPU version
-     start = clock();
-     gpu_clustering(dataset, n, m, dendrogram);
-     end = clock();    
-  }
+
+// The GPU version
+  start = clock();
+  gpu_clustering(dataset, n, m, dendrogram);
+  end = clock();    
   
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   
-  printf("Time taken for %s is %lf\n", type_of_device == 0? "CPU" : "GPU", time_taken);
+  printf("Time taken for %s is %lf\n", "GPU", time_taken);
 
-  printf("Dendrogram:\n");
-  print_float_matrix(dendrogram, n-1, 3);
+  if (PRINT_DENDRO){
+    print_dendro(dendrogram, n);
+  }
   
   free(dataset);
 
