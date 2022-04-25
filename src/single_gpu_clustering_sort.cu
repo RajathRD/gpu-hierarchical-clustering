@@ -70,6 +70,7 @@ void print_thrustint_matrix(thrust::host_vector<unsigned int> &a, unsigned int n
 }
 
 void print_dendro(float * dendrogram, int iteration){
+  printf("Dendrogram:\n");
   for(int i=0; i<iteration; i++){
       printf("I: %d -- (%.0f <- %.0f) : %.2f\n", i+1, dendrogram[index(i, 0, 3)], dendrogram[index(i, 1, 3)], dendrogram[index(i, 2, 3)]);
   }
@@ -183,23 +184,27 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d_ptr, n, m);
   
   thrust::copy(dist_matrix_d.begin(), dist_matrix_d.end(), dist_matrix.begin());  
-//   print_thrustfloat_matrix(dist_matrix, n, n);
-
-  thrust::host_vector<thrust::pair<unsigned int, unsigned int>> indices(n*n);
+  // print_thrustfloat_matrix(dist_matrix, n, n);
   // std::cout <<"GPU: Calculated GPU Pairwise Dists" << std::endl;
 
-  for (int i=0; i<n*n; i++){
-    indices[i] = {i/n, i%n};
+
+  thrust::host_vector<unsigned int> indices(n*n);
+
+  for(int i=0; i<n*n; i++){
+    indices[i] = i;
   }
 
-  thrust::device_vector<thrust::pair<int, int>> indices_d = indices;
+  thrust::device_vector<unsigned int> indices_d = indices;
      
   thrust::sort_by_key(dist_matrix_d.begin(), dist_matrix_d.end(), indices_d.begin());
    
   thrust::copy(indices_d.begin(), indices_d.end(), indices.begin());
   // std::cout <<"GPU: Sorted Pairwise Dists" << std::endl;
+
   // for(int i = 0; i < n*n; i++){
-  //   int r = indices[i].first, c = indices[i].second;
+  //   int index = indices[i];
+    
+  //   int r = index/n, c = index%n;
   //   std::cout << r << " " << c << " :" << dist_matrix[index(r,c,n)] << std::endl;
   //   if (dist_matrix[index(r,c,n)] == FLT_MAX) break;
   // }
@@ -217,8 +222,8 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
   // std::cout <<"Building Dendrogram" << std::endl;
   for(int i=0; i<n*n; i++) {
     
-    vec_idx_1 = indices[i].first;
-    vec_idx_2 = indices[i].second;
+    vec_idx_1 = indices[i]/n;
+    vec_idx_2 = indices[i]%n;
     distance = dist_matrix[index(vec_idx_1, vec_idx_2, n)];
     
     if (distance == FLT_MAX) break;
@@ -248,6 +253,7 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
   }
   // std::cout <<"Finished Building Dendrogram" << std::endl;
   cudaFree(dataset_d);
+
   if (PRINT_DENDRO)
     print_dendro(dendrogram, iteration);
 }
