@@ -166,6 +166,7 @@ int main(int argc, char * argv[])
             string merge (buffer);
             res+=merge;
         }
+
         if(PRINT_ANALYSIS) {
             printf("Merges made, in order:\n");
             cout << res << "\n";
@@ -187,8 +188,6 @@ int main(int argc, char * argv[])
     // We are running with simulated data
     N = atoi(argv[1]);
     M = atoi(argv[2]);
-
-
 
     if (PRINT_ANALYSIS) {
       printf("Hierarchical Clustering:\n");
@@ -224,10 +223,12 @@ int main(int argc, char * argv[])
     time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
 
     //Print Result
+
     if(PRINT_LOG) {
         printf("Dendrogram:\n");
         for (int i=0; i<N-1; i++){
-            printf("(%d <- %d)\n", result[2*i], result[(2*i)+1]);
+            printf("I: %d -- (%d <- %d)\n", i+1, result[2*i], result[(2*i)+1]);
+
         }
     }
     
