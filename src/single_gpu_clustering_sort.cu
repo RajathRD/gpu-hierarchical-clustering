@@ -16,6 +16,8 @@
 void  clustering(float *, unsigned int, unsigned int, float *);
 void calculate_pairwise_dists(float *, int, int, float *);
 float calculate_dist(float *, int, int, int);
+void merge_clusters(unsigned int *, unsigned int, unsigned int, unsigned int);
+int get_parent(unsigned int, unsigned int *);
 // void update_cluster_cpu(unsigned int *, unsigned int, unsigned int, unsigned int);
 
 // Device Functions
@@ -128,7 +130,7 @@ void update_cluster_cpu(unsigned int * cluster, unsigned int cluster_1, unsigned
     }
 }
 
-int get_parent(int curr_parent, int* parents) {
+int get_parent(unsigned int curr_parent, unsigned int* parents) {
   if (parents[curr_parent] == curr_parent) return curr_parent;
   parents[curr_parent] = get_parent(parents[curr_parent], parents);
   return parents[curr_parent];
@@ -235,7 +237,9 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
 
         // CPU Update
         
-        update_cluster_cpu(cluster_ptr, cluster_1, cluster_2, n);
+        // update_cluster_cpu(cluster_ptr, cluster_1, cluster_2, n);
+
+        merge_clusters(cluster_ptr, vec_idx_1, vec_idx_2, n);
         
         // // GPU Update
         // int thread_cnt = 1024;
@@ -283,6 +287,16 @@ float calculate_dist(float * dataset, int i, int j, int dim) {
   return dist;
 }
 
+void merge_clusters(unsigned int * cluster, unsigned int data_point_i, unsigned int data_point_j, unsigned int dim) {
+  // if (!(data_point_i >= 0 && data_point_i < dim && data_point_j >= 0 && data_point_j < dim)) {
+  //   printf("merge_clusters out of bounds");
+  //   return;
+  // } 
+
+  int parent_i = get_parent(data_point_i, cluster);
+  cluster[get_parent(data_point_j, cluster)] = parent_i;
+} 
+
 __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matrix, unsigned int n, unsigned int m)
 {
   int index = threadIdx.x + blockDim.x * blockIdx.x;
@@ -303,6 +317,7 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
     }
   }
 }
+
 
 __global__ void update_cluster_cuda(unsigned int * cluster, unsigned int cluster_1, unsigned int cluster_2, unsigned int n)
 {
