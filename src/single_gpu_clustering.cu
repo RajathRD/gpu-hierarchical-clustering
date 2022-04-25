@@ -16,7 +16,7 @@
 #define swap(a,b)   {a^=b; b^=a; a^=b;}
 /* Config params */
 #define PRINT_LOG 0
-#define PRINT_DENDRO 0
+#define PRINT_DENDRO 1
 #define PRINT_ANALYSIS 0
 
 /* Define constants */
@@ -234,7 +234,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   start = clock();
 
   // TODO: check for failure
-  thread_cnt = 1024;
+  thread_cnt = 128;
   block_cnt = (int) ceil(n*n / (double)thread_cnt);
   unsigned int * block_mins = (unsigned int *) calloc (block_cnt, sizeof(unsigned int));
   unsigned int * block_mins_d;
@@ -253,18 +253,21 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
       cudaMemcpy(block_mins, block_mins_d, block_cnt*sizeof(unsigned int), cudaMemcpyDeviceToHost);
       indices_ptr = block_mins;
       size = block_cnt;
+      printf("Block Mins: ");
+      for(int i=0; i<block_cnt; i++) printf("%d ", block_mins[i]);
+      printf("\n");
     }
     
     unsigned int min_val_idx = block_mins[0];
     float min_value = dist_matrix[min_val_idx];
     int i = min_val_idx/n;
     int j = min_val_idx%n;
-
+    
     // Always i should be smaller than j - cluster with higher index gets merged to the cluster with lower index
     if (i > j) swap(i,j)
 
     // printf("--> i %d, j %d, min_val %.2f\n", i, j, min_value);
-
+    // break;
     dendrogram[index(iteration, 0, 3)] = (float) i;
     dendrogram[index(iteration, 1, 3)] = (float) j;
     dendrogram[index(iteration, 2, 3)] = min_value;
@@ -392,6 +395,15 @@ __global__ void calculate_pairwise_dists_cuda(float * dataset, float * dist_matr
 // }
 
 // shared_memory
+__device__ void unroll_last_reduce(float * arr, volatile unsigned int* sindices, int tid) {
+  if (arr[sindices[tid]] > arr[sindices[tid+32]]) sindices[tid] = sindices[tid+32];
+  if (arr[sindices[tid]] > arr[sindices[tid+16]]) sindices[tid] = sindices[tid+16];
+  if (arr[sindices[tid]] > arr[sindices[tid+8]]) sindices[tid] = sindices[tid+8];
+  if (arr[sindices[tid]] > arr[sindices[tid+4]]) sindices[tid] = sindices[tid+4];
+  if (arr[sindices[tid]] > arr[sindices[tid+2]]) sindices[tid] = sindices[tid+2];
+  if (arr[sindices[tid]] > arr[sindices[tid+1]]) sindices[tid] = sindices[tid+1];
+}
+
 __global__ void min_reduction(float *arr, unsigned int * indices, unsigned int * block_mins, unsigned int n){
   extern __shared__ unsigned int sindices[];
   unsigned int tid = threadIdx.x;
@@ -403,7 +415,7 @@ __global__ void min_reduction(float *arr, unsigned int * indices, unsigned int *
   __syncthreads();
 
   if (index < n){
-    while (stride > 0){
+    while (stride > 32){
         left = tid;
         right = left + stride;
         if (tid < stride && right < n){
@@ -418,6 +430,9 @@ __global__ void min_reduction(float *arr, unsigned int * indices, unsigned int *
       __syncthreads();
     }
   }
+
+  if (tid < 32) unroll_last_reduce(arr, sindices, tid);
+
   if (tid == 0){
     block_mins[blockIdx.x] = sindices[0];
   }
