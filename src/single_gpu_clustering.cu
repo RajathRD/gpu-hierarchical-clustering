@@ -14,9 +14,9 @@
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
 #define swap(a,b)   {a^=b; b^=a; a^=b;}
+
 /* Config params */
 #define PRINT_LOG 0
-#define PRINT_DENDRO 0
 #define PRINT_ANALYSIS 0
 
 /* Define constants */
@@ -25,15 +25,9 @@
 /**************************** Definitions *************************************/
 
 // Function declarations
-void seq_clustering(float *, unsigned int, unsigned int, float *);
 void gpu_clustering(float *, unsigned int, unsigned int, float *);
-void calculate_pairwise_dists(float *, int, int, float *);
-void find_pairwise_min(float *, int, float *, int *);
-void merge_clusters(int *, int, int, int);
-float calculate_dist(float *, int, int, int);
 void print_float_matrix(float *, int, int);
 void print_int_matrix(int *, int, int);
-int get_parent(int, int *);
 
 // Kernel functions
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
@@ -72,7 +66,7 @@ void load_data(float * dataset, int n, int m) {
       dataset[index(i, j, m)] = ((float)rand()/(float)(RAND_MAX)) * RANGE - RANGE/2.0;
     } 
   }
-  if (PRINT_LOG){
+  if (PRINT_ANALYSIS){
     printf("Dataset:\n");
     print_float_matrix(dataset, n, m);
   }
@@ -89,29 +83,27 @@ void print_dendro(float * dendrogram, unsigned int n){
 /**************************** main() *************************************/
 int main(int argc, char * argv[])
 {
-  //Define variables
-  //unsigned int N; /* Dimention of NxN matrix */
-  
+  //Define variables  
   int n = atoi(argv[1]);
   int m = atoi(argv[2]);
 
-  printf("Hierarchical Clustering:\n");
-  printf("Dataset size: %d x %d\n", n, m);
-  
+  if (PRINT_ANALYSIS) {
+    printf("Hierarchical Clustering:\n");
+    printf("Dataset size: %d x %d\n", n, m);
+  }
   
   // to measure time taken by a specific part of the code 
   double time_taken;
   clock_t start, end;
   
   // Validate
-  /*if(argc != 4)
+  if(argc != 3)
   {
-    fprintf(stderr, "usage: heatdist num  iterations  who\n");
-    fprintf(stderr, "num = dimension of the square matrix (50 and up)\n");
-    fprintf(stderr, "iterations = number of iterations till stopping (1 and up)\n");
-    fprintf(stderr, "who = 0: sequential code on CPU, 1: GPU execution\n");
+    fprintf(stderr, "usage: program n m\n");
+    fprintf(stderr, "n = dimension n\n");
+    fprintf(stderr, "m = dimension m\n");
     exit(1);
-  }*/
+  }
 
   //Load data
   float * dataset = (float *)calloc(n*m, sizeof(float));
@@ -119,12 +111,7 @@ int main(int argc, char * argv[])
    fprintf(stderr, " Cannot allocate the %u x %u array\n", n, m);
    exit(1);
   }
-
   load_data(dataset, n, m);
-  //load_test_data(dataset);
-  printf("Data loaded!\n");
-  
-
 
   float dendrogram[(n-1)*3];
 
@@ -137,7 +124,7 @@ int main(int argc, char * argv[])
   
   printf("Time taken for %s is %lf\n", "GPU", time_taken);
 
-  if (PRINT_DENDRO){
+  if (PRINT_LOG){
     print_dendro(dendrogram, n);
   }
   
@@ -196,7 +183,8 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
   // cudaDeviceSynchronize();
-  if (PRINT_LOG) {
+
+  if (PRINT_ANALYSIS) {
     printf("Dist Matrix:\n");
     cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
     print_float_matrix(dist_matrix, n, n);
@@ -209,7 +197,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   
   start = clock();
 
-  // TODO: check for failure
   thread_cnt = 128;
   block_cnt = (int) ceil(n*n / (double)thread_cnt);
   unsigned int * block_mins = (unsigned int *) calloc (block_cnt, sizeof(unsigned int));
@@ -253,7 +240,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
     // O(1) - Update left cluster's distance with all others
     update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, i, j, n);
     cudaDeviceSynchronize();
-    if (PRINT_LOG) {
+    if (PRINT_ANALYSIS) {
       printf("Update left cluster's distance with all others: Dist Matrix:\n");
       cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
       print_float_matrix(dist_matrix, n, n);
@@ -265,7 +252,7 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
     // O(1) - Remove right clusters from further consideration
     remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, j, n);
     cudaDeviceSynchronize();
-    if (PRINT_LOG) {
+    if (PRINT_ANALYSIS) {
       printf("Remove right clusters from further consideration: Dist Matrix:\n");
       cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
       print_float_matrix(dist_matrix, n, n);

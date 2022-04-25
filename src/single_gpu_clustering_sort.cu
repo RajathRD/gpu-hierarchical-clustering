@@ -111,7 +111,6 @@ int main(int argc, char * argv[])
     exit(1);
     }
     load_data(dataset, n, m);
-    printf("Data loaded!\n");
 
     float dendrogram[(n-1)*3];
     start = clock();
