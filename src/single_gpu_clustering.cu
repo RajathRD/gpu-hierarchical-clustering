@@ -16,7 +16,7 @@
 #define swap(a,b)   {a^=b; b^=a; a^=b;}
 /* Config params */
 #define PRINT_LOG 0
-#define PRINT_DENDRO 1
+#define PRINT_DENDRO 0
 #define PRINT_ANALYSIS 0
 
 /* Define constants */
@@ -253,9 +253,9 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
       cudaMemcpy(block_mins, block_mins_d, block_cnt*sizeof(unsigned int), cudaMemcpyDeviceToHost);
       indices_ptr = block_mins;
       size = block_cnt;
-      printf("Block Mins: ");
-      for(int i=0; i<block_cnt; i++) printf("%d ", block_mins[i]);
-      printf("\n");
+      // printf("Block Mins: ");
+      // for(int i=0; i<block_cnt; i++) printf("%d ", block_mins[i]);
+      // printf("\n");
     }
     
     unsigned int min_val_idx = block_mins[0];
