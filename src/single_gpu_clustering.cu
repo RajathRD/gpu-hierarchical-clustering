@@ -1,9 +1,3 @@
-/* 
- *
- * FIXME: Put docs here
- * 
- */
-
 #include <cuda.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +10,7 @@
 #define swap(a,b)   {a^=b; b^=a; a^=b;}
 
 /* Config params */
-#define PRINT_LOG 0
+#define PRINT_LOG 1
 #define PRINT_ANALYSIS 0
 
 /* Define constants */

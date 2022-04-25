@@ -9,7 +9,7 @@
 #define index(i, j, N)  ((i)*(N)) + (j)
 
 /* Config params */
-#define PRINT_LOG 0
+#define PRINT_LOG 1
 #define PRINT_ANALYSIS 0
 
 /* Define constants */

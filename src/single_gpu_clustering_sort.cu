@@ -10,7 +10,7 @@
 #define index(i, j, N)  ((i)*(N)) + (j)
 #define swap(a,b)   {a^=b; b^=a; a^=b;}
 /* Define constants */
-#define PRINT_DENDRO 0
+#define PRINT_DENDRO 1
 #define RANGE 100
 
 // Host Functions
