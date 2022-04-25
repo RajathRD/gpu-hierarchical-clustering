@@ -15,7 +15,11 @@ using namespace std;
 
 /* To index element (i,j) of a 2D array stored as 1D */
 #define index(i, j, N)  ((i)*(N)) + (j)
-#define PRINT_LOG 0
+
+/* Config params */
+#define PRINT_LOG 1
+#define PRINT_ANALYSIS 0
+
 /* Define constants */
 #define RANGE 100
 
@@ -132,9 +136,9 @@ int main(int argc, char * argv[])
             cout << "Unable to open input file\n";
         }
 
-        printf("Test case %d\n", test_idx+1);
-        printf("Dataset size: %d x %d\n", N, M);
-        if (PRINT_LOG){
+        if (PRINT_ANALYSIS){
+          printf("Test case %d\n", test_idx+1);
+          printf("Dataset size: %d x %d\n", N, M);
           printf("Dataset:\n");
           print_float_matrix(dataset, N, M);
         }
@@ -162,7 +166,7 @@ int main(int argc, char * argv[])
             string merge (buffer);
             res+=merge;
         }
-        if(PRINT_LOG) {
+        if(PRINT_ANALYSIS) {
             printf("Merges made, in order:\n");
             cout << res << "\n";
         }
@@ -184,19 +188,23 @@ int main(int argc, char * argv[])
     N = atoi(argv[1]);
     M = atoi(argv[2]);
 
-    printf("Hierarchical Clustering:\n");
-    printf("Dataset size: %d x %d\n", N, M);
+
+
+    if (PRINT_ANALYSIS) {
+      printf("Hierarchical Clustering:\n");
+      printf("Dataset size: %d x %d\n", N, M);
+    }
 
     // Generate simulated data
     dataset = (float *)calloc(N*M, sizeof(float));
-    if( !dataset )
-    {
-    fprintf(stderr, " Cannot allocate the %u x %u array\n", N, M);
-    exit(1);
+    if( !dataset ) {
+      fprintf(stderr, " Cannot allocate the %u x %u array\n", N, M);
+      exit(1);
     }
+
     gen_data(dataset, N, M);
-    printf("Data loaded!\n");
-    if (PRINT_LOG){
+
+    if (PRINT_ANALYSIS){
       printf("Dataset:\n");
       print_float_matrix(dataset, N, M);
     }
@@ -217,7 +225,7 @@ int main(int argc, char * argv[])
 
     //Print Result
     if(PRINT_LOG) {
-        printf("Merges made, in order:\n");
+        printf("Dendrogram:\n");
         for (int i=0; i<N-1; i++){
             printf("(%d <- %d)\n", result[2*i], result[(2*i)+1]);
         }
@@ -268,7 +276,7 @@ void seq_clustering(float * dataset, unsigned int N, unsigned int M, int* A)
   // Populate C matrix
   calculate_pairwise_dists(dataset, N, M, C);
 
-  if (PRINT_LOG){
+  if (PRINT_ANALYSIS){
     printf("Distance matrix:\n");
     print_float_matrix(C, N, N);
   }

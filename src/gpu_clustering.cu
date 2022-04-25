@@ -77,30 +77,6 @@ void load_data(float * dataset, int n, int m) {
   }
 }
 
-// void load_test_data(float * dataset) {
-//   float arr[6][2] = {
-//     {0.0,0.0},
-//     {1.0,1.0},
-//     {10.0,10.0},
-//     {11.0,11.0},
-//     {-100.0,-100.0},
-//     {-111.0,111.0}};
-
-//   int n = 6;
-//   int m = 2;
-
-//   for (int i = 0; i < n; i ++) {
-//     for (int j = 0; j < m; j++) {
-//       dataset[index(i, j, m)] = arr[i][j];
-//     } 
-//   }
-
-//   if (PRINT_LOG){
-//     printf("Dataset:\n");
-//     print_float_matrix(dataset, n, m);
-//   }
-// }
-
 
 /**************************** main() *************************************/
 int main(int argc, char * argv[])
@@ -513,27 +489,3 @@ __global__ void find_pairwise_min_cuda(float * dist_matrix_d, int n, int * indic
     stride /= 2;
   }
 }
-
-
-/*
- 1. Improve CPU version to n^2 long n or n^2 
- 2. GPU get pairwise min parallel reduction
- 3. Merging/updating matrices
-
- 4. Testing/Validation - till GPU runs out of memory
- 5. Improvements
-
-  Tasks:
-    - DONE: Fix issues for these:
-      ./single_gpu_clustering 7 1 1
-      ./single_gpu_clustering 10 1 1
-      ./single_gpu_clustering 7 2 1
-  
-    - TODO: Update arg checks for 4 inputs as well as for tests
-    - TODO: Add tester in a separate file with sample tests for GPU version
-
-  Notes:
-    - There are 3 cuda memory (cudaMalloc with int and float types) allocations so, total memory needed is 4*(2*n*n + n*m). 
-      Sine single device memory is 60GB, n should be tested as much as 120000 before hitting memory limits. 
-
-*/
