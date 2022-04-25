@@ -1,1 +1,1 @@
-nvcc src/single_gpu_clustering.cu -o single_gpu_clustering
+nvcc src/gpu_clustering.cu -o gpu_clustering
