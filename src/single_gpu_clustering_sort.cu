@@ -19,10 +19,9 @@ void calculate_pairwise_dists(float *, int, int, float *);
 float calculate_dist(float *, int, int, int);
 void merge_clusters(unsigned int *, unsigned int, unsigned int, unsigned int);
 int get_parent(unsigned int, unsigned int *);
-// void update_cluster_cpu(unsigned int *, unsigned int, unsigned int, unsigned int);
+void update_cluster_cpu(unsigned int *, unsigned int, unsigned int, unsigned int);
 
 // Device Functions
-// __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
 __global__ void calculate_pairwise_dists_cuda(float *, float *, unsigned int, unsigned int);
 __global__ void update_cluster_cuda(unsigned int *, unsigned int, unsigned int, unsigned int);
 
@@ -291,15 +290,9 @@ int get_parent(unsigned int curr_parent, unsigned int* parents) {
   if (parents[curr_parent] == curr_parent) return curr_parent;
   parents[curr_parent] = get_parent(parents[curr_parent], parents);
   return parents[curr_parent];
-  // return get_parent(parents[curr_parent], parents);
 }
 
 void merge_clusters(unsigned int * cluster, unsigned int data_point_i, unsigned int data_point_j, unsigned int dim) {
-  // if (!(data_point_i >= 0 && data_point_i < dim && data_point_j >= 0 && data_point_j < dim)) {
-  //   printf("merge_clusters out of bounds");
-  //   return;
-  // } 
-
   int parent_i = get_parent(data_point_i, cluster);
   cluster[get_parent(data_point_j, cluster)] = parent_i;
 } 
@@ -331,7 +324,6 @@ __global__ void update_cluster_cuda(unsigned int * cluster, unsigned int cluster
   int index = threadIdx.x + blockDim.x * blockIdx.x;
   // Dont update if thread id is outside of the box
   if (index < n){
-    // printf("Kernel: %d %d %d\n", index, cluster_1, cluster_2);
     if (cluster[index] == cluster_2) cluster[index] = cluster_1;
   }
 }
