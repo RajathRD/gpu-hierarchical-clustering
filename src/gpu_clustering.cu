@@ -124,13 +124,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   double time_taken;
   clock_t start, end;
 
-  // FIXME: Remove this in final cleanup, here only for testing
-  float* dist_matrix = (float *)calloc(n*n, sizeof(float));
-  if( !dist_matrix ) {
-   fprintf(stderr, " Cannot allocate dist_matrix %u array\n", n*n);
-   exit(1);
-  }
-
   float * dist_matrix_d;
   cudaMalloc((void**) &dist_matrix_d, n*n*sizeof(float));
   if (!dist_matrix_d) {
@@ -163,11 +156,6 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
   cudaDeviceSynchronize();
-  if (PRINT_LOG) {
-    printf("Dist Matrix:\n");
-    cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-    print_float_matrix(dist_matrix, n, n);
-  }
   end = clock();
 
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
@@ -224,20 +212,10 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
     // O(1) - Update left cluster's distance with all others
     update_cluster<<<block_cnt, thread_cnt>>> (dist_matrix_d, i, j, n);
     cudaDeviceSynchronize();
-    if (PRINT_LOG) {
-      printf("Update left cluster's distance with all others: Dist Matrix:\n");
-      cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-      print_float_matrix(dist_matrix, n, n);
-    }
 
     // O(1) - Remove right clusters from further consideration
     remove_cluster<<<block_cnt, thread_cnt>>>(dist_matrix_d, j, n);
     cudaDeviceSynchronize();
-    if (PRINT_LOG) {
-      printf("Remove right clusters from further consideration: Dist Matrix:\n");
-      cudaMemcpy(dist_matrix, dist_matrix_d, n*n*sizeof(float), cudaMemcpyDeviceToHost);
-      print_float_matrix(dist_matrix, n, n);
-    }
   }
 
   cudaFree(dataset_d);
