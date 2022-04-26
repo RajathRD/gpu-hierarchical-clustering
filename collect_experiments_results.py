@@ -42,7 +42,7 @@ def collect_results(experiments_folder):
     cpu2_runtimes = []
     gpu1_runtimes = []
     gpu2_runtimes = []
-    all_filenames = sorted([f for f in os.listdir(experiments_folder) if os.path.isfile(os.path.join(experiments_folder, f))])
+    all_filenames = sorted([f for f in os.listdir(experiments_folder) if (os.path.isfile(os.path.join(experiments_folder, f)) and f.endswith(".txt"))])
     for file_name in all_filenames:
         file_name_split = file_name.split("_")
         n = int(file_name_split[1])
