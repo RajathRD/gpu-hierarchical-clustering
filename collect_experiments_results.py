@@ -1,31 +1,27 @@
 #!/usr/bin/env python
 import os
 
-def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
+def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu_runtimes):
     if  not (len(cpu1_runtimes) == len(cpu2_runtimes) and 
-        len(cpu2_runtimes) == len(gpu1_runtimes) and
-        len(gpu1_runtimes) == len(gpu2_runtimes)):
+        len(cpu2_runtimes) == len(gpu_runtimes)):
         raise Exception("All lengths should match")
     
-    print("i\tn\tm\tCPU1\tCPU2\tGPU1\tGPU2\t(CPU1/GPU2)\t(CPU2/GPU2)\t(GPU1/GPU2)")
+    print("i\t\tn\t\tm\t\tCPU1\t\tCPU2\t\tGPU\t\t(CPU1/GPU)\t\t(CPU2/GPU)")
     l = len(cpu1_runtimes)
     for i in range(l):
         cpu1_entry = cpu1_runtimes[i]
         cpu2_entry = cpu2_runtimes[i]
-        gpu1_entry = gpu1_runtimes[i]
-        gpu2_entry = gpu2_runtimes[i]
+        gpu2_entry = gpu_runtimes[i]
         n = cpu1_entry[0]
         m = cpu1_entry[1]
 
         cpu1 = "{:.4f}".format(cpu1_entry[2]) if cpu1_entry[2] != "N/A" else "N/A"
         cpu2 = "{:.4f}".format(cpu2_entry[2]) if cpu2_entry[2] != "N/A" else "N/A"
-        gpu1 = "{:.4f}".format(gpu1_entry[2]) if gpu1_entry[2] != "N/A" else "N/A"
         gpu2 = "{:.4f}".format(gpu2_entry[2]) if gpu2_entry[2] != "N/A" else "N/A"
         sp1 = "{:.4f}".format(cpu1_entry[2]/gpu2_entry[2]) if cpu1_entry[2] != "N/A" and gpu2_entry[2] != "N/A" else "N/A"
         sp2 = "{:.4f}".format(cpu2_entry[2]/gpu2_entry[2]) if cpu2_entry[2] != "N/A" and gpu2_entry[2] != "N/A" else "N/A"
-        sp3 = "{:.4f}".format(gpu1_entry[2]/gpu2_entry[2]) if gpu1_entry[2] != "N/A" and gpu2_entry[2] != "N/A" else "N/A"
 
-        print(str(i)+"\t"+str(n)+"\t"+str(m)+"\t"+cpu1+"\t"+cpu2+"\t"+ gpu1+"\t"+gpu2+"\t"+sp1+"\t\t"+sp2+"\t\t"+sp3)
+        print(str(i)+"\t\t"+str(n)+"\t\t"+str(m)+"\t\t"+cpu1+"\t\t"+cpu2+"\t\t"+gpu2+"\t\t"+sp1+"\t\t"+sp2)
 
 
 def read_exp_res(file_path):
@@ -64,7 +60,7 @@ def collect_results(experiments_folder):
 
 def main():
     experiments_folder = "experiments_cuda1"
-    cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes = collect_results(experiments_folder)
-    print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes)
+    cpu1_runtimes, cpu2_runtimes, _, gpu_runtimes = collect_results(experiments_folder)
+    print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu_runtimes)
 
 main()
