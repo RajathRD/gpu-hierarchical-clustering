@@ -221,9 +221,8 @@ int main(int argc, char * argv[])
     end = clock();
     
     time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-
-    //Print Result
     printf("Time: %lf\n", time_taken);
+    //Print Result
     if(PRINT_LOG) {
         printf("Dendrogram:\n");
         for (int i=0; i<N-1; i++){
@@ -231,6 +230,7 @@ int main(int argc, char * argv[])
 
         }
     }
+    
     free(result);
   }
   else {

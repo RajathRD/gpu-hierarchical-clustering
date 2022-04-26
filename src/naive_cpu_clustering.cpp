@@ -64,6 +64,13 @@ void load_data(float * dataset, int n, int m) {
   }
 }
 
+void print_dendro(float * dendrogram, int iteration){
+  printf("Dendrogram:\n");
+  for(int i=0; i<iteration; i++){
+      printf("I: %d -- (%.0f <- %.0f) : %.2f\n", i+1, dendrogram[index(i, 0, 3)], dendrogram[index(i, 1, 3)], dendrogram[index(i, 2, 3)]);
+  }
+}
+
 
 /**************************** main() *************************************/
 int main(int argc, char * argv[])
@@ -108,10 +115,8 @@ int main(int argc, char * argv[])
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   printf("Time: %lf\n", time_taken);
   if (PRINT_LOG) {
-    printf("Dendrogram:\n");
-    print_float_matrix(dendrogram, n-1, 3);
+    print_dendro(dendrogram, n);
   }
-  
   
   free(dataset);
 

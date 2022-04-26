@@ -116,10 +116,9 @@ int main(int argc, char * argv[])
   
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   
-  printf("Time: %lf\n", "GPU", time_taken);
+  printf("Time: %lf\n", time_taken);
   if (PRINT_LOG) {
-    printf("Dendrogram:\n");
-    print_float_matrix(dendrogram, n-1, 3);
+    print_dendro(dendrogram, n);
   }
   
   free(dataset);
