@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 
-def isStr(a):
+def isNotStr(a):
     return type(a) != type("")
 
 def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
@@ -19,8 +19,12 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
         gpu2 = gpu2_runtimes[i]
         n = cpu1[0]
         m = cpu1[1]
-        sp1 = "{:.4f}".format(cpu1[2]/gpu2[2]) if not isStr(cpu1[2]) and not isStr(gpu2[2]) else "Error"
-        sp2 = "{:.4f}".format(cpu2[2]/gpu2[2]) if not isStr(cpu2[2]) and not isStr(gpu2[2]) else "Error"
+        sp1 = sp2 = "Error"
+        if isNotStr(cpu1[2]) and isNotStr(gpu2[2]):
+            sp1 = "{:.4f}".format(cpu1[2]/gpu2[2]) 
+        if isNotStr(cpu2[2]) and isNotStr(gpu2[2]):
+            sp2 = "{:.4f}".format(cpu2[2]/gpu2[2])
+
         print(str(i)+"\t"+str(n)+"\t"+str(m)+"\t"+str(cpu1[2])+"\t"+str(cpu2[2])+"\t"+str(gpu1[2])+"\t"+str(gpu2[2])+"\t"+sp1+"\t\t"+sp2)
 
 
