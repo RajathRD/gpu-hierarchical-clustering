@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys 
 
 def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu_runtimes):
     if  not (len(cpu1_runtimes) == len(cpu2_runtimes) and 
@@ -14,7 +15,7 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu_runtimes):
         gpu2_entry = gpu_runtimes[i]
         n = cpu1_entry[0]
         m = cpu1_entry[1]
-        
+
         if not(cpu1_entry[0] == cpu2_entry[0] and cpu2_entry[0] == gpu2_entry[0] and cpu1_entry[1] == cpu2_entry[1] and cpu2_entry[1] == gpu2_entry[1]):
             raise Exception("Runtimes have not been passed in correct order in terms of inputs")
 
@@ -62,7 +63,15 @@ def collect_results(experiments_folder):
     return cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes
 
 def main():
-    experiments_folder = "experiments_cuda1"
+    if len(sys.argv) != 2:
+        print("Usage: program experiments_folder")
+        exit(1)
+
+    experiments_folder = sys.argv[1]
+    if not os.path.isdir('new_folder'):
+        print("Experiment folder " + experiments_folder + " does not exist!")
+        exit(1)
+
     cpu1_runtimes, cpu2_runtimes, _, gpu_runtimes = collect_results(experiments_folder)
     print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu_runtimes)
 

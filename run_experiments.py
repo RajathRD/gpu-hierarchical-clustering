@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 
 def run_experiments(build_name, ns, ms, build_folder, experiments_folder):
     results = []
@@ -15,15 +16,22 @@ def run_experiments(build_name, ns, ms, build_folder, experiments_folder):
     return results
 
 def main():
+    if len(sys.argv) != 2:
+        print("Usage: program experiments_folder")
+        exit(1)
+
     build_folder = "target"
     os.system("./compile.sh")
 
-    experiments_folder = "experiments_cuda1"
+    experiments_folder = sys.argv[1]
     os.system("rm -rf " + experiments_folder)
     os.system("mkdir -p " + experiments_folder)
 
-    n = [4096, 8192, 12288, 16384]
-    m = [16, 32, 64, 128, 1024, 2048, 4096]
+    #n = [4096, 8192, 12288, 16384]
+    #m = [16, 32, 64, 128, 1024, 2048, 4096]
+
+    n = [200, 1000]
+    m = [10, 20]
 
     cpu1_runtimes = run_experiments("cpu1", n, m, build_folder, experiments_folder)
     cpu2_runtimes = run_experiments("cpu2", n, m, build_folder, experiments_folder)
