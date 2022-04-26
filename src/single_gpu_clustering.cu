@@ -170,12 +170,10 @@ void gpu_clustering(float * dataset, unsigned int n, unsigned int m, float * den
   // Maximum number of threads per block in cuda1.cims.nyu.edu 
   int thread_cnt = 1024;
   int block_cnt = (int) ceil(n*n / (double)thread_cnt);
-  printf("Launching kernel with %d blocks and %d threads\n", block_cnt, thread_cnt);
 
   // O(1)
   start = clock();
   calculate_pairwise_dists_cuda<<<block_cnt, thread_cnt>>>(dataset_d, dist_matrix_d, n, m);
-  // cudaDeviceSynchronize();
 
   if (PRINT_ANALYSIS) {
     printf("Dist Matrix:\n");

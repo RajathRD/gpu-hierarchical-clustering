@@ -95,12 +95,11 @@ int main(int argc, char * argv[])
     int n = atoi(argv[1]);
     int m = atoi(argv[2]);
 
-    printf("Hierarchical Clustering:\n");
-    printf("Dataset size: %d x %d\n", n, m);
+    // printf("Hierarchical Clustering:\n");
+    // printf("Dataset size: %d x %d\n", n, m);
 
     // to measure time taken by a specific part of the code 
     // double time_taken;
-
 
     //Load data
     float * dataset;
