@@ -19,13 +19,16 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
         gpu2 = gpu2_runtimes[i]
         n = cpu1[0]
         m = cpu1[1]
-        sp1 = sp2 = "Error"
+        sp1 = sp2 = sp3 = "Error"
         if isNotStr(cpu1[2]) and isNotStr(gpu2[2]):
             sp1 = "{:.4f}".format(cpu1[2]/gpu2[2]) 
         if isNotStr(cpu2[2]) and isNotStr(gpu2[2]):
             sp2 = "{:.4f}".format(cpu2[2]/gpu2[2])
+        if isNotStr(gpu1[2]) and isNotStr(gpu2[2]):
+            sp3 = "{:.4f}".format(gpu1[2]/gpu2[2])
 
-        print(str(i)+"\t"+str(n)+"\t"+str(m)+"\t"+str(cpu1[2])+"\t"+str(cpu2[2])+"\t"+str(gpu1[2])+"\t"+str(gpu2[2])+"\t"+sp1+"\t\t"+sp2)
+        print(str(i)+"\t"+str(n)+"\t"+str(m)+"\t"+str(cpu1[2])+"\t"+str(cpu2[2])+"\t"+
+            str(gpu1[2])+"\t"+str(gpu2[2])+"\t"+sp1+"\t\t"+sp2+"\t\t"+sp3)
 
 
 def read_exp_res(file_path):
@@ -39,7 +42,7 @@ def read_exp_res(file_path):
 
 def run_experiments(build_name, ns, ms, build_folder, experiments_folder):
     results = []
-    timeout_seconds = 3600
+    timeout_seconds = 30
     build = os.path.join(build_folder, build_name)
     for n in ns:
         for m in ms:
