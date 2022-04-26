@@ -63,8 +63,8 @@ def main():
     #n = [4096, 8192, 12288, 16384]
     #m = [16, 32, 64, 128, 1024, 2048, 4096]
 
-    n = [100, 200]
-    m = [2, 16]
+    n = [1000, 2000]
+    m = [16, 32]
 
     cpu1_runtimes = run_experiments("cpu1", n, m, build_folder, experiments_folder)
     cpu2_runtimes = run_experiments("cpu2", n, m, build_folder, experiments_folder)
