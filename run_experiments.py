@@ -13,7 +13,7 @@ def read_exp_res(file_path):
 
 
 def doesResultExist(file_path):
-    return file_path.is_file() and read_exp_res(file_path) != "N/A"
+    return os.path.isfile(file_path) and read_exp_res(file_path) != "N/A"
 
 def run_experiments_parallel(build_name, ns, ms, experiments_folder):
     results = []
