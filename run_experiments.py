@@ -3,31 +3,27 @@ import os
 
 def run_experiments(build_name, ns, ms, build_folder, experiments_folder):
     results = []
-    timeout_seconds = 10
+    timeout_seconds = 3600
     build = os.path.join(build_folder, build_name)
     for n in ns:
         for m in ms:
             title = build_name + "_" + str(n) + "_" + str(m) + ".txt"
             result_file = os.path.join(experiments_folder, title)
             command = "timeout " + str(timeout_seconds) +" ./" + build + " " + str(n) + " " + str(m) + " > " + result_file + " 2>&1 &"
-            #command = "(timeout " + str(timeout_seconds) + " ./" + build + " " + str(n) + " " + str(m) + " > /dev/null 2>&1)  2> " + result_file 
             print("Running: " + command)
             os.system(command)
     return results
 
 def main():
     build_folder = "target"
-    #os.system("./compile.sh")
+    os.system("./compile.sh")
 
     experiments_folder = "experiments_cuda1"
     os.system("rm -rf " + experiments_folder)
     os.system("mkdir -p " + experiments_folder)
 
-    #n = [4096, 8192, 12288, 16384]
-    #m = [16, 32, 64, 128, 1024, 2048, 4096]
-
-    n = [1000, 2000]
-    m = [16, 32]
+    n = [4096, 8192, 12288, 16384]
+    m = [16, 32, 64, 128, 1024, 2048, 4096]
 
     cpu1_runtimes = run_experiments("cpu1", n, m, build_folder, experiments_folder)
     cpu2_runtimes = run_experiments("cpu2", n, m, build_folder, experiments_folder)

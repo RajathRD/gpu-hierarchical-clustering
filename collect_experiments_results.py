@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 import os
 
-def isNotStr(a):
-    return type(a) != type("")
-
 def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
     if  not (len(cpu1_runtimes) == len(cpu2_runtimes) and 
         len(cpu2_runtimes) == len(gpu1_runtimes) and
