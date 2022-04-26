@@ -9,6 +9,8 @@ This codebase is structured as follows.
 - `target` folder contains the binaries for all 4 implementations
 - `compile.sh` compiles the source code and generates the binaries
 - `run_experiments.py` runs experiments for different problem sizes across the different clusters
+
+```
 .
 ├── compile.sh
 ├── run_experiments.py
@@ -22,6 +24,7 @@ This codebase is structured as follows.
     ├── cpu2
     ├── gpu1
     └── gpu2
+```
 
 ### Instructions
 1. `cd` to root
