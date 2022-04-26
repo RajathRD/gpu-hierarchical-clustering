@@ -15,11 +15,11 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu_runtimes):
         n = cpu1_entry[0]
         m = cpu1_entry[1]
 
-        cpu1 = "{:.4f}".format(cpu1_entry[2]) if cpu1_entry[2] != "N/A" else "N/A"
-        cpu2 = "{:.4f}".format(cpu2_entry[2]) if cpu2_entry[2] != "N/A" else "N/A"
-        gpu2 = "{:.4f}".format(gpu2_entry[2]) if gpu2_entry[2] != "N/A" else "N/A"
-        sp1 = "{:.4f}".format(cpu1_entry[2]/gpu2_entry[2]) if cpu1_entry[2] != "N/A" and gpu2_entry[2] != "N/A" else "N/A"
-        sp2 = "{:.4f}".format(cpu2_entry[2]/gpu2_entry[2]) if cpu2_entry[2] != "N/A" and gpu2_entry[2] != "N/A" else "N/A"
+        cpu1 = "{:.2f}".format(cpu1_entry[2]) if cpu1_entry[2] != "N/A" else "N/A"
+        cpu2 = "{:.2f}".format(cpu2_entry[2]) if cpu2_entry[2] != "N/A" else "N/A"
+        gpu2 = "{:.2f}".format(gpu2_entry[2]) if gpu2_entry[2] != "N/A" else "N/A"
+        sp1 = "{:.2f}".format(cpu1_entry[2]/gpu2_entry[2]) if cpu1_entry[2] != "N/A" and gpu2_entry[2] != "N/A" else "N/A"
+        sp2 = "{:.2f}".format(cpu2_entry[2]/gpu2_entry[2]) if cpu2_entry[2] != "N/A" and gpu2_entry[2] != "N/A" else "N/A"
 
         print(str(i)+"\t\t"+str(n)+"\t\t"+str(m)+"\t\t"+cpu1+"\t\t"+cpu2+"\t\t"+gpu2+"\t\t"+sp1+"\t\t"+sp2)
 
