@@ -35,7 +35,7 @@ def run_experiments_parallel(build_name, ns, ms, experiments_folder):
 
 def run_experiments_sequential(build_name, ns, ms, experiments_folder):
     results = []
-    timeout_seconds = 3600
+    timeout_seconds = 1800
     build = os.path.join(experiments_folder, build_name)
 
     # Create empty files initially for reporting
