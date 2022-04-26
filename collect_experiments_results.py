@@ -14,6 +14,8 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu_runtimes):
         gpu2_entry = gpu_runtimes[i]
         n = cpu1_entry[0]
         m = cpu1_entry[1]
+        if not(cpu1_entry[0] == cpu2_entry[0] and cpu2_entry[0] == gpu2_entry[0] and cpu1_entry[1] == cpu2_entry[1] and cpu2_entry[1] == gpu2_entry[1]):
+            raise Exception("Error")
 
         cpu1 = "{:.2f}".format(cpu1_entry[2]) if cpu1_entry[2] != "N/A" else "N/A"
         cpu2 = "{:.2f}".format(cpu2_entry[2]) if cpu2_entry[2] != "N/A" else "N/A"
