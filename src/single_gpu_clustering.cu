@@ -337,11 +337,10 @@ __global__ void min_reduction(float *arr, unsigned int * indices, unsigned int *
   unsigned int index = threadIdx.x + blockIdx.x * blockDim.x;
   int stride = blockDim.x / 2;
   int left = index, right = left + stride;
-  
-  sindices[tid] = indices[index];
-  __syncthreads();
 
   if (index < n){
+    sindices[tid] = indices[index];
+    __syncthreads();
     while (stride > 32){
         left = tid;
         right = left + stride;
