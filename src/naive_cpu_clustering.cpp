@@ -115,7 +115,7 @@ int main(int argc, char * argv[])
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
   printf("Time: %lf\n", time_taken);
   if (PRINT_LOG) {
-    print_dendro(dendrogram, n);
+    print_dendro(dendrogram, n-1);
   }
   
   free(dataset);
