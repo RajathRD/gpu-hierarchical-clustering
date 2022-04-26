@@ -45,7 +45,7 @@ def run_experiments(build_name, ns, ms, build_folder, experiments_folder):
         for m in ms:
             title = build_name + "_" + str(n) + "_" + str(m) + ".txt"
             result_file = os.path.join(experiments_folder, title)
-            command = "timeout" + str(timeout_seconds) +"./" + build + " " + str(n) + " " + str(m) + " > " + result_file + " 2>&1 "
+            command = "timeout " + str(timeout_seconds) +" ./" + build + " " + str(n) + " " + str(m) + " > " + result_file + " 2>&1 "
             #command = "(timeout " + str(timeout_seconds) + " ./" + build + " " + str(n) + " " + str(m) + " > /dev/null 2>&1)  2> " + result_file 
             print("Running: " + command)
             os.system(command)
