@@ -30,35 +30,40 @@ def read_exp_res(file_path):
                 return seconds
         return "Timeout"
 
-def run_experiments(build, ns, ms, experiments_folder):
+def run_experiments(build_name, ns, ms, build_folder, experiments_folder):
     results = []
     timeout_seconds = 3600
+    build = os.path.join(build_folder, build_name)
     for n in ns:
         for m in ms:
-            title = build + " " + str(n) + " " + str(m) + ".txt"
+            title = build_name + "_" + str(n) + "_" + str(m) + ".txt"
             result_file = os.path.join(experiments_folder, title)
-            command = "(timeout " + timeout_seconds + "./" + build + " " + str(n) + " " + str(m) + " > /dev/null 2>&1)  2> " + result_file 
+            command = "./" + build + " " + str(n) + " " + str(m) + " > " + result_file + " 2>&1 "
+
+            #command = "(timeout " + str(timeout_seconds) + " ./" + build + " " + str(n) + " " + str(m) + " > /dev/null 2>&1)  2> " + result_file 
             print("Running: " + command)
             os.system(command)
             results.append((n, m, read_exp_res(result_file)))
     return results
 
 def main():
+    build_folder = "target"
     os.system("./compile.sh")
-    #n = [4096, 8192, 12288, 16384]
-    #m = [16, 32, 64, 128, 1024, 2048, 4096]
 
     experiments_folder = "experiments"
     os.system("rm -rf " + experiments_folder)
     os.system("mkdir -p " + experiments_folder)
 
+    #n = [4096, 8192, 12288, 16384]
+    #m = [16, 32, 64, 128, 1024, 2048, 4096]
+    
     n = [100, 200]
     m = [2, 16]
 
-    cpu1_runtimes = run_experiments("target/cpu1", n, m, experiments_folder)
-    cpu2_runtimes = run_experiments("target/cpu2", n, m, experiments_folder)
-    gpu1_runtimes = run_experiments("target/gpu1", n, m, experiments_folder)
-    gpu2_runtimes = run_experiments("target/gpu2", n, m, experiments_folder)
+    cpu1_runtimes = run_experiments("cpu1", n, m, build_folder, experiments_folder)
+    cpu2_runtimes = run_experiments("cpu2", n, m, build_folder, experiments_folder)
+    gpu1_runtimes = run_experiments("gpu1", n, m, build_folder, experiments_folder)
+    gpu2_runtimes = run_experiments("gpu2", n, m, build_folder, experiments_folder)
 
     print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes)
 
