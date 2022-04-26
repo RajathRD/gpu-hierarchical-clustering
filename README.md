@@ -29,6 +29,6 @@ This codebase is structured as follows.
 ### Instructions
 1. `cd` to root
 2. Enable script permissions: `chmod +x compile.sh`
-3. Compile and generate binaries in targets folder: `./compile.sh`
+3. Compile and generate binaries in `target` folder: `./compile.sh`
 4. To run any of the 4 binaries: `./targets/<binary-name> N M`, where `N` is number of samples to generate and `M` is dimension of samples
 5. To run the experiments: `python run_experiments.py`
