@@ -26,10 +26,10 @@ def main():
     os.system("rm -rf " + experiments_folder)
     os.system("mkdir -p " + experiments_folder)
 
-    "g++ -o " + os.path.join(experiments_folder, "cpu1") + " " + os.path.join("src", "naive_cpu_clustering.cpp")
-    "g++ -o " + os.path.join(experiments_folder, "cpu2") + " " + os.path.join("src", "cpu_clustering.cpp")
-    "nvcc -o " + os.path.join(experiments_folder, "gpu1") + " " + os.path.join("src", "single_gpu_clustering.cu")
-    "nvcc -o " + os.path.join(experiments_folder, "gpu2") + " " + os.path.join("src", "single_gpu_clustering_sort.cu")
+    os.system("g++ -o " + os.path.join(experiments_folder, "cpu1") + " " + os.path.join("src", "naive_cpu_clustering.cpp"))
+    os.system("g++ -o " + os.path.join(experiments_folder, "cpu2") + " " + os.path.join("src", "cpu_clustering.cpp"))
+    os.system("nvcc -o " + os.path.join(experiments_folder, "gpu1") + " " + os.path.join("src", "single_gpu_clustering.cu"))
+    os.system("nvcc -o " + os.path.join(experiments_folder, "gpu2") + " " + os.path.join("src", "single_gpu_clustering_sort.cu"))
 
     n = [200, 1000]
     m = [10, 20]
