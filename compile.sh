@@ -1,4 +1,5 @@
 #!/bin/bash
+mkdir -p target
 rm target/cpu1
 rm target/cpu2
 rm target/gpu1
