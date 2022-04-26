@@ -4,7 +4,7 @@ import sys
 
 def run_experiments_parallel(build_name, ns, ms, experiments_folder):
     results = []
-    timeout_seconds = 1200
+    timeout_seconds = 3600
     build = os.path.join(experiments_folder, build_name)
     for n in ns:
         for m in ms:
@@ -63,7 +63,7 @@ def main():
 
     run_experiments_parallel("cpu1", n, m, experiments_folder)
     run_experiments_parallel("cpu2", n, m, experiments_folder)
-    #run_experiments("gpu1", n, m, experiments_folder, False)
+    #run_experiments_sequential("gpu1", n, m, experiments_folder)
     run_experiments_sequential("gpu2", n, m, experiments_folder)
 
 main()
