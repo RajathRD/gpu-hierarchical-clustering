@@ -18,7 +18,7 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
         m = cpu1[1]
         sp1 = "{:.2f}".format(cpu1[2]/gpu2[2])
         sp2 = "{:.2f}".format(cpu2[2]/gpu2[2])
-        print(i+"\t"+n+"\t"+m+"\t"+cpu1[2]+"\t"+cpu2[2]+"\t"+gpu1[2]+"\t"+gpu2[2]+"\t"+sp1+"\t"+sp2)
+        print(str(i)+"\t"+str(n)+"\t"+str(m)+"\t"+str(cpu1[2])+"\t"+str(cpu2[2])+"\t"+str(gpu1[2])+"\t"+str(gpu2[2])+"\t"+sp1+"\t"+sp2)
 
 
 def read_exp_res(file_path):
@@ -56,7 +56,7 @@ def main():
 
     #n = [4096, 8192, 12288, 16384]
     #m = [16, 32, 64, 128, 1024, 2048, 4096]
-    
+
     n = [100, 200]
     m = [2, 16]
 
