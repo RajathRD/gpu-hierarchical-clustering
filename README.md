@@ -9,11 +9,13 @@ This codebase is structured as follows.
 - `target` folder contains the binaries for all 4 implementations
 - `compile.sh` compiles the source code and generates the binaries
 - `run_experiments.py` runs experiments for different problem sizes across the different clusters
+- `collect_experiments_results.py` collects and generates a summary of the experiments results in a given folder
 
 ```
 .
 ├── compile.sh
 ├── run_experiments.py
+├── collect_experiments_results.py
 └── src
 │   ├── cpu_clustering.cpp
 │   ├── naive_cpu_clustering.cpp
@@ -31,4 +33,5 @@ This codebase is structured as follows.
 2. Enable script permissions: `chmod +x compile.sh`
 3. Compile and generate binaries in `target` folder: `./compile.sh`
 4. To run any of the 4 binaries: `./target/<binary-name> N M`, where `N` is number of samples to generate and `M` is dimension of samples
-5. To run the experiments: `python run_experiments.py`
+5. To run the experiments: `./run_experiments.py folder_path`
+6. To get the outputs of finished experiments: `./collect_experiments_results.py folder_path`
