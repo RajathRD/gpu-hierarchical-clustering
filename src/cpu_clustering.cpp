@@ -227,7 +227,6 @@ int main(int argc, char * argv[])
         printf("Dendrogram:\n");
         for (int i=0; i<N-1; i++){
             printf("I: %d -- (%d <- %d)\n", i+1, result[2*i], result[(2*i)+1]);
-
         }
     }
     
