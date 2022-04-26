@@ -55,11 +55,11 @@ def main():
     os.system("nvcc -o " + os.path.join(experiments_folder, "gpu1") + " " + os.path.join("src", "single_gpu_clustering.cu"))
     os.system("nvcc -o " + os.path.join(experiments_folder, "gpu2") + " " + os.path.join("src", "single_gpu_clustering_sort.cu"))
 
-    n = [200, 1000]
-    m = [10, 20]
+    # n = [200, 1000]
+    # m = [10, 20]
 
-    # n = [4096, 8192, 12288, 16384]
-    # m = [16, 32, 64, 128, 1024, 2048, 4096]
+    n = [4096, 8192, 12288, 16384]
+    m = [16, 32, 64, 128, 1024, 2048, 4096]
 
     run_experiments_parallel("cpu1", n, m, experiments_folder)
     run_experiments_parallel("cpu2", n, m, experiments_folder)
