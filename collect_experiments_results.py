@@ -3,7 +3,7 @@ import os
 import sys 
 import pandas
 
-def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
+def print_runtimes(experiments_folder, cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
     if  not (len(cpu1_runtimes) == len(cpu2_runtimes) and 
         len(cpu2_runtimes) == len(gpu1_runtimes) and
         len(gpu1_runtimes) == len(gpu2_runtimes)):
@@ -41,7 +41,9 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
         # print(str(i)+"\t\t"+str(n)+"\t\t"+str(m)+"\t\t"+cpu1+"\t\t"+cpu2+"\t\t"+gpu2+"\t\t"+sp1+"\t\t"+sp2)
 
     df = df.sort_values(by=['n', "m"])
+    df.to_csv(experiments_folder + "_results.csv")
     print(df)
+    
 
 def read_exp_res(file_path):
     with open(file_path, "r") as f:
@@ -88,6 +90,6 @@ def main():
         exit(1)
 
     cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes = collect_results(experiments_folder)
-    print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes)
+    print_runtimes(experiments_folder, cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes)
 
 main()
