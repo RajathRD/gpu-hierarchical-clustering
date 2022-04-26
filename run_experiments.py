@@ -27,15 +27,15 @@ def main():
     os.system("rm -rf " + experiments_folder)
     os.system("mkdir -p " + experiments_folder)
 
-    #n = [4096, 8192, 12288, 16384]
-    #m = [16, 32, 64, 128, 1024, 2048, 4096]
+    n = [4096, 8192, 12288, 16384]
+    m = [16, 32, 64, 128, 1024, 2048, 4096]
 
-    n = [200, 1000]
-    m = [10, 20]
+    # n = [200, 1000]
+    # m = [10, 20]
 
-    cpu1_runtimes = run_experiments("cpu1", n, m, build_folder, experiments_folder)
-    cpu2_runtimes = run_experiments("cpu2", n, m, build_folder, experiments_folder)
-    gpu1_runtimes = run_experiments("gpu1", n, m, build_folder, experiments_folder)
-    gpu2_runtimes = run_experiments("gpu2", n, m, build_folder, experiments_folder)
+    run_experiments("cpu1", n, m, build_folder, experiments_folder)
+    run_experiments("cpu2", n, m, build_folder, experiments_folder)
+    run_experiments("gpu1", n, m, build_folder, experiments_folder)
+    run_experiments("gpu2", n, m, build_folder, experiments_folder)
 
 main()
