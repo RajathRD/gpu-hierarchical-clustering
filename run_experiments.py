@@ -10,8 +10,9 @@ def run_experiments(build_name, ns, ms, build_folder, experiments_folder, is_par
         for m in ms:
             title = build_name + "_" + str(n) + "_" + str(m) + ".txt"
             result_file = os.path.join(experiments_folder, title)
+            background = "&" if is_parallel else ""
             command = ("timeout " + str(timeout_seconds) +" ./" + build + " " + str(n) 
-                + " " + str(m) + " > " + result_file + " 2>&1 " + "&" if is_parallel else "")
+                + " " + str(m) + " > " + result_file + " 2>&1 " + background)
             print("Running: " + command)
             os.system(command)
     return results
