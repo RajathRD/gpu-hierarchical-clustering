@@ -16,8 +16,8 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
         gpu2 = gpu2_runtimes[i]
         n = cpu1[0]
         m = cpu1[1]
-        sp1 = "{:.2f}".format(cpu1[2]/gpu2[2])
-        sp2 = "{:.2f}".format(cpu2[2]/gpu2[2])
+        sp1 = "{:.4f}".format(cpu1[2]/gpu2[2])
+        sp2 = "{:.4f}".format(cpu2[2]/gpu2[2])
         print(str(i)+"\t"+str(n)+"\t"+str(m)+"\t"+str(cpu1[2])+"\t"+str(cpu2[2])+"\t"+str(gpu1[2])+"\t"+str(gpu2[2])+"\t"+sp1+"\t"+sp2)
 
 
