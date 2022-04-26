@@ -59,7 +59,7 @@ def main():
     # m = [10, 20]
 
     n = [4096, 8192, 12288, 16384]
-    m = [16, 32, 64, 128, 1024, 2048, 4096]
+    m = [16, 32, 64, 128, 1024, 2048, 4096, 8192]
 
     run_experiments_parallel("cpu1", n, m, experiments_folder)
     run_experiments_parallel("cpu2", n, m, experiments_folder)
