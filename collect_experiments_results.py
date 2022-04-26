@@ -3,12 +3,12 @@ import os
 import sys 
 
 def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu_runtimes):
-    if  not (len(cpu1_runtimes) == len(cpu2_runtimes) and 
-        len(cpu2_runtimes) == len(gpu_runtimes)):
-        raise Exception("All lengths should match")
+    # if  not (len(cpu1_runtimes) == len(cpu2_runtimes) and 
+    #     len(cpu2_runtimes) == len(gpu_runtimes)):
+    #     raise Exception("All lengths should match")
     
     print("i\t\tn\t\tm\t\tCPU1\t\tCPU2\t\tGPU\t\t(CPU1/GPU)\t(CPU2/GPU)")
-    l = len(cpu1_runtimes)
+    l = len(gpu_runtimes)
     for i in range(l):
         cpu1_entry = cpu1_runtimes[i]
         cpu2_entry = cpu2_runtimes[i]
