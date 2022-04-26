@@ -10,8 +10,7 @@ def print_runtimes(experiments_folder, cpu1_runtimes, cpu2_runtimes, gpu1_runtim
         len(gpu1_runtimes) == len(gpu2_runtimes)):
         raise Exception("All lengths should match")
     
-    # print("i\t\tn\t\tm\t\tCPU1\t\tCPU2\t\tGPU\t\t(CPU1/GPU)\t(CPU2/GPU)")
-    headers = ["n", "m", "CPU1", "CPU2", "GPU1", "GPU2", "CPU1/GPU1", "CPU2/GPU1", "CPU1/GPU2", "CPU2/GPU2", "GPU1/GPU2"]
+    headers = ["N", "M", "CPU1", "CPU2", "GPU1", "GPU2", "CPU1/GPU1", "CPU2/GPU1", "CPU1/GPU2", "CPU2/GPU2", "GPU1/GPU2"]
     df = pandas.DataFrame(columns=headers)
     l = len(cpu1_runtimes)
     for i in range(l):
@@ -36,13 +35,10 @@ def print_runtimes(experiments_folder, cpu1_runtimes, cpu2_runtimes, gpu1_runtim
         sp5 = gpu1_entry[2]/gpu2_entry[2] if gpu1_entry[2] != "N/A" and gpu2_entry[2] != "N/A" else "N/A"
         
         entry = (n, m, cpu1, cpu2, gpu1, gpu2, sp1, sp2, sp3, sp4, sp5)
-        # print(entry)
         df.loc[i] = entry
 
-        # print(str(i)+"\t\t"+str(n)+"\t\t"+str(m)+"\t\t"+cpu1+"\t\t"+cpu2+"\t\t"+gpu2+"\t\t"+sp1+"\t\t"+sp2)
-
-    df = df.sort_values(by=['n', "m"]).replace('N/A',numpy.NaN).round(2)
-    df.to_csv(experiments_folder + "_results.csv")
+    df = df.sort_values(by=['N', "M"]).replace('N/A',numpy.NaN).round(2)
+    df.to_csv(experiments_folder + "_results.csv", index=False)
     print(df)
     
 
