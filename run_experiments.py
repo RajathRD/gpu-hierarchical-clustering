@@ -10,7 +10,7 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
         len(gpu1_runtimes) == len(gpu2_runtimes)):
         raise Exception("All lengths should match")
     
-    print("i\tn\tm\tCPU1\tCPU2\tGPU1\tGPU2\t(CPU1/GPU2)\t(CPU2/GPU2)")
+    print("i\tn\tm\tCPU1\tCPU2\tGPU1\tGPU2\t(CPU1/GPU2)\t(CPU2/GPU2)\t(GPU1/GPU2)")
     l = len(cpu1_runtimes)
     for i in range(l):
         cpu1 = cpu1_runtimes[i]
@@ -42,7 +42,7 @@ def read_exp_res(file_path):
 
 def run_experiments(build_name, ns, ms, build_folder, experiments_folder):
     results = []
-    timeout_seconds = 30
+    timeout_seconds = 10
     build = os.path.join(build_folder, build_name)
     for n in ns:
         for m in ms:
