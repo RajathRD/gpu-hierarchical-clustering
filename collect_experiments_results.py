@@ -68,7 +68,7 @@ def main():
         exit(1)
 
     experiments_folder = sys.argv[1]
-    if not os.path.isdir('new_folder'):
+    if not os.path.isdir(experiments_folder):
         print("Experiment folder " + experiments_folder + " does not exist!")
         exit(1)
 
