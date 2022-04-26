@@ -223,7 +223,7 @@ int main(int argc, char * argv[])
     time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
 
     //Print Result
-
+    printf("Time: %lf\n", time_taken);
     if(PRINT_LOG) {
         printf("Dendrogram:\n");
         for (int i=0; i<N-1; i++){
@@ -231,8 +231,6 @@ int main(int argc, char * argv[])
 
         }
     }
-    
-    printf("Time taken for CPU is %lf\n", time_taken);
     free(result);
   }
   else {

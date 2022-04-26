@@ -115,11 +115,16 @@ int main(int argc, char * argv[])
     float dendrogram[(n-1)*3];
     start = clock();
     clustering(dataset, n, m, dendrogram);   
-    end = clock();    
+    end = clock(); 
     
     time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
     
-    printf("Time taken for %s is %lf\n", "GPU", time_taken);
+    printf("Time: %lf\n", "GPU", time_taken);
+    if (PRINT_LOG) {
+      printf("Dendrogram:\n");
+      print_float_matrix(dendrogram, n-1, 3);
+    }
+
     return 0;
 }
 
@@ -255,8 +260,8 @@ void  clustering(float * dataset, unsigned int n, unsigned int m, float * dendro
   // std::cout <<"Finished Building Dendrogram" << std::endl;
   cudaFree(dataset_d);
 
-  if (PRINT_DENDRO)
-    print_dendro(dendrogram, iteration);
+  // if (PRINT_DENDRO)
+  //   print_dendro(dendrogram, iteration);
 }
 
 void calculate_pairwise_dists(float * dataset, int n, int m, float * dist_matrix) {

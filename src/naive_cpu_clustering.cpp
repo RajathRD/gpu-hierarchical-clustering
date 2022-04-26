@@ -106,12 +106,12 @@ int main(int argc, char * argv[])
   end = clock();
   
   time_taken = ((double)(end - start))/ CLOCKS_PER_SEC;
-
+  printf("Time: %lf\n", time_taken);
   if (PRINT_LOG) {
     printf("Dendrogram:\n");
     print_float_matrix(dendrogram, n-1, 3);
   }
-  printf("Time taken for CPU %lf\n", time_taken);
+  
   
   free(dataset);
 
