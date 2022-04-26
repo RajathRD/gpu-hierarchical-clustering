@@ -7,7 +7,7 @@ def print_runtimes(cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
         len(gpu1_runtimes) == len(gpu2_runtimes)):
         raise Exception("All lengths should match")
     
-    print("i\tn\tm\tCPU1\tCPU2\tGPU1\tGPU2\tSpeedup(CPU1/GPU2)\tSpeedup(CPU2/GPU2)")
+    print("i\tn\tm\tCPU1\tCPU2\tGPU1\tGPU2\t(CPU1/GPU2)\t(CPU2/GPU2)")
     l = len(cpu1_runtimes)
     for i in range(l):
         cpu1 = cpu1_runtimes[i]
