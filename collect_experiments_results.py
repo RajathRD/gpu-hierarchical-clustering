@@ -10,7 +10,7 @@ def print_runtimes(experiments_folder, cpu1_runtimes, cpu2_runtimes, gpu1_runtim
         raise Exception("All lengths should match")
     
     # print("i\t\tn\t\tm\t\tCPU1\t\tCPU2\t\tGPU\t\t(CPU1/GPU)\t(CPU2/GPU)")
-    headers = ["n", "m", "CPU1", "CPU2", "GPU1", "GPU2", "(CPU1/GPU1)", "(CPU2/GPU1)", "(CPU1/GPU2)", "(CPU2/GPU2)", "(GPU1/GPU2)"]
+    headers = ["n", "m", "CPU1", "CPU2", "GPU1", "GPU2", "CPU1/GPU1", "CPU2/GPU1", "CPU1/GPU2", "CPU2/GPU2", "GPU1/GPU2"]
     df = pandas.DataFrame(columns=headers)
     l = len(cpu1_runtimes)
     for i in range(l):
