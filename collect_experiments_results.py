@@ -2,6 +2,7 @@
 import os
 import sys 
 import pandas
+import numpy
 
 def print_runtimes(experiments_folder, cpu1_runtimes, cpu2_runtimes, gpu1_runtimes, gpu2_runtimes):
     if  not (len(cpu1_runtimes) == len(cpu2_runtimes) and 
@@ -40,7 +41,7 @@ def print_runtimes(experiments_folder, cpu1_runtimes, cpu2_runtimes, gpu1_runtim
 
         # print(str(i)+"\t\t"+str(n)+"\t\t"+str(m)+"\t\t"+cpu1+"\t\t"+cpu2+"\t\t"+gpu2+"\t\t"+sp1+"\t\t"+sp2)
 
-    df = df.sort_values(by=['n', "m"])
+    df = df.sort_values(by=['n', "m"]).replace('N/A',numpy.NaN).round(2)
     df.to_csv(experiments_folder + "_results.csv")
     print(df)
     
